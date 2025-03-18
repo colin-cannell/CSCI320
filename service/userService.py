@@ -28,7 +28,10 @@ class UserService:
         try:
             cursor = connection.cursor()
             hashed_password = hash(password)
-            query = sql.SQL("INSERT INTO users (username, password, first_name, last_name, email) VALUES (%s, %s, %s, %s, %s)")
+            query = sql.SQL("""
+                            INSERT INTO users (username, password, first_name, last_name, email)
+                             VALUES (%s, %s, %s, %s, %s)
+                            """)
             cursor.execute(query, (username, hashed_password, first_name, last_name, email))
             connection.commit()
             return True
@@ -46,7 +49,9 @@ class UserService:
         
         try:
             cursor = connection.cursor()
-            query = sql.SQL("SELECT password FROM users WHERE username = %s")
+            query = sql.SQL("""
+                            SELECT password FROM users WHERE username = %s
+                            """)
             cursor.execute(query, (username,))
             result = cursor.fetchone()
             if result and check_password(password, result[0]):
@@ -67,7 +72,10 @@ class UserService:
 
         try:
             cursor = connection.cursor()
-            query = sql.SQL("INSERT INTO follows (follower_email, followee_email) VALUES (%s, %s)")
+            query = sql.SQL("""
+                            INSERT INTO follows (follower_email, followee_email
+                            VALUES (%s, %s)
+                            """)
             cursor.execute(query, (follower_email, followee_email))
             connection.commit()
             return True
@@ -85,7 +93,9 @@ class UserService:
 
         try:
             cursor = connection.cursor()
-            query = sql.SQL("DELETE FROM follows WHERE follower_email = %s AND followee_email = %s")
+            query = sql.SQL("""
+                            DELETE FROM follows WHERE follower_email = %s AND followee_email = %s
+                            """)
             cursor.execute(query, (follower_email, followee_email))
             connection.commit()
             return True
