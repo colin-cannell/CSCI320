@@ -5,17 +5,16 @@ from entities.platform import Platform
 from entities.genre import Genre
 
 class Movie:
-    def __init__(self, genre, length, title, mpaa_rating, release_date, release_platform, movie_id, studio, director, cast):
+    def __init__(self, title, genre, release_platform, release_date, length, cast, directors, studio, mpaa_rating):
         self.title = title
         self.genre = genre
         self.release_platform = release_platform
         self.release_date = release_date
         self.length = length
-        self.mpaa_rating = mpaa_rating
-        self.cast = cast
-        self.director = director
+        self.cast = cast  # Make sure this is included in the constructor
+        self.directors = directors
         self.studio = studio
-        self.movie_id = movie_id
+        self.mpaa_rating = mpaa_rating
 
     def __str__(self):
         return self.title

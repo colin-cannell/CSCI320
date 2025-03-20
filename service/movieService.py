@@ -20,7 +20,7 @@ class MovieService:
         try:
             cursor = connection.cursor()
             base_query = """
-                            SELECT id, title, release_date, studio, genre FROM movies WHERE 
+                            SELECT id, title, release_date, studio, genre FROM movie WHERE 
                         """
             conditions = []
             params = []
@@ -41,11 +41,11 @@ class MovieService:
                 conditions.append("genre ILIKE %s")
                 params.append(f"%{genre}%")
 
-            query = base_query + " AND ".join(conditions) if conditions else "SELECT id, title, release_date, studio, genre FROM movies"
+            query = base_query + " AND ".join(conditions) if conditions else "SELECT id, title, release_date, studio, genre FROM movie"
             cursor.execute(query, params)
             return cursor.fetchall()
         except psycopg2.Error as e:
-            print(f"Error searching movies: {e}")
+            print(f"Error searching movie: {e}")
             return []
         finally:
             cursor.close()

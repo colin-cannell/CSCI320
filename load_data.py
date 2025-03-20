@@ -1,8 +1,9 @@
 import csv
 import json
 from datetime import datetime
-from main import Movie  # Ensure this import is correct
+from entities.movie import Movie
 
+import json
 
 def safe_parse_list(data):
     """Ensure the input is a list. Convert comma-separated strings into lists if necessary."""
@@ -12,9 +13,10 @@ def safe_parse_list(data):
             try:
                 return json.loads(data.replace("'", "\""))  # Convert single to double quotes if needed
             except json.JSONDecodeError:
-                return data.split(", ")  # Fallback to splitting manually
-        return data.split(", ") if ", " in data else [data]  # Convert to a list
-    return []
+                # Fallback to manually splitting the string by comma if JSON format is invalid
+                return data.split(", ")
+        return data.split(", ") if ", " in data else [data]  # Convert to a list if it's a simple string
+    return [data]  # If not a string, just return the data in a list
 
 
 def load_movies_from_csv(file_path):
@@ -33,7 +35,7 @@ def load_movies_from_csv(file_path):
             except ValueError:
                 release_date = 'Unknown'
 
-            length = row.get('Length', '0').strip()
+            length = row.get('Length (minutes)', '0').strip()
             length = int(length) if length.isdigit() else 0
 
             mpaa_rating = row.get('MPAA Rating', 'NR')
@@ -42,13 +44,22 @@ def load_movies_from_csv(file_path):
             directors = safe_parse_list(row.get('Directors', 'Unknown'))
             studio = row.get('Studios', 'Unknown')
 
-            movie = Movie(title, genre, release_platform, release_date, length, cast, directors, studio, mpaa_rating)
+            # print(f"title {title}")
+            # print(f"genre {genre}")
+            # print(f"release_platform {release_platform}")
+            # print(f"release_date {release_date}")
+            # print(f"length {length}")
+            # print(f"cast {cast}")
+            # print(f"directors {directors}")
+            # print(f"studio {studio}")
+            # print(f"mpaa_rating {mpaa_rating}")
+
+
+            movie = Movie(title=title, genre=genre, release_platform=release_platform, release_date=release_date, length=length, cast=cast, directors=directors, studio=studio, mpaa_rating=mpaa_rating)
 
             movies.append(movie)
 
     return movies
 
 
-movies = load_movies_from_csv('movies_dataset.csv')
-for movie in movies:
-    print(movie)
+

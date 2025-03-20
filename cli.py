@@ -22,35 +22,62 @@
 # list_movies
 
 import argparse
-import sys
 import psycopg2
-# from user_service import UserService
-# from movie_service import MovieService
-# from collection_service import CollectionService
+from sshtunnel import SSHTunnelForwarder
+from service.userService import UserService
+from service.movieService import MovieService
+from service.collectionService import CollectionService
 
 # Import modules for handling business logic
-
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
     "user": "cjc1985",
     "password": "Calamity2023!",
-    "port": "5432"
+    "port": 40000  # Match SSH tunnel port
 }
+
+from sshtunnel import SSHTunnelForwarder
+import psycopg2
+
+username = "cjc1985"
+password = "Calamity2023!"
+db_name = "p32001_21"
+
 
 def connect_db():
     try:
-        conn = psycopg2.connect(**db_params)
-        return conn
+        with SSHTunnelForwarder(
+            ("starbug.cs.rit.edu", 22),
+            user=username,
+            password=password,  # Use SSH key if possible
+            host="localhost",
+            remote_bind_address=("localhost", 5432)) as server:
+        
+            server.start()
+            print(f"SSH tunnel established. Local port: {server.local_bind_port}")
+            params = {
+                'dbname': db_name,
+                'user': username,
+                'password': password,
+                'host': 'localhost',
+                'port': server.local_bind_port
+            }
+            connection = psycopg2.connect(**params)
+            curs = connection.cursor()
+            print ("Connection established")
+
+            return connection
     except Exception as e:
         print(f"Error connecting to database: {e}")
         return None
 
+        
 def execute_query(query):
     connection = connect_db()
     if not connection:
         return
-    
+
     try:
         cursor = connection.cursor()
         cursor.execute(query)
@@ -61,10 +88,10 @@ def execute_query(query):
                 print(row)
         else:
             connection.commit()
-            print("Query executed successfully.")
+            print("✅ Query executed successfully.")
     
     except psycopg2.Error as e:
-        print(f"Query error: {e}")
+        print(f"❌ Query error: {e}")
     
     finally:
         cursor.close()
@@ -81,6 +108,12 @@ def main():
     register_parser.add_argument("first_name", help="First name")
     register_parser.add_argument("last_name", help="Last name")
     register_parser.add_argument("email", help="Email")
+
+    get_creation_date_parser = subparsers.add_parser("get_creation_date", help="Get user creation date")
+    get_creation_date_parser.add_argument("username", help="Username")
+
+    get_last_login_date_parser = subparsers.add_parser("get_last_login", help="Get user last login date")
+    get_last_login_date_parser.add_argument("username", help="Username")
     
     # Login command
     login_parser = subparsers.add_parser("login", help="Login to the system")
@@ -120,6 +153,8 @@ def main():
     
     # Collection commands
     create_col_parser = subparsers.add_parser("create_collection", help="Create a new collection")
+    create_col_parser.add_argument("collectionid", help="collection id")
+    create_col_parser.add_argument("userid", help="user id")
     create_col_parser.add_argument("collection_name", help="Name of the collection")
     
     add_col_parser = subparsers.add_parser("add_to_collection", help="Add movie to collection")
@@ -130,7 +165,8 @@ def main():
     remove_col_parser.add_argument("collection_name", help="Name of the collection")
     remove_col_parser.add_argument("movie_id", help="ID of movie to remove")
     
-    subparsers.add_parser("list_collections", help="List all collections")
+    list_col_parser = subparsers.add_parser("list_collections", help="List all collections")
+    list_col_parser.add_argument("userid", help="user id")
     
     rename_col_parser = subparsers.add_parser("rename_collection", help="Rename a collection")
     rename_col_parser.add_argument("old_name", help="Current collection name")
@@ -150,79 +186,61 @@ def main():
     args = parser.parse_args()
     
     # Initialize service objects
-    # user_service = UserService()
-    # movie_service = MovieService()
-    # collection_service = CollectionService()
+    userService = UserService(db_params)
+    movieService = MovieService(db_params)
+    collectionService = CollectionService(db_params)
     # social_service = SocialService()
     
     # Handle commands
     if args.command == "register":
-        # user_service.register(args.username, args.password, args.first_name, args.last_name, args.email)
-        print("register not implemented")
+        userService.register(args.username, args.password, args.first_name, args.last_name, args.email)
+    elif args.command == "get_creation_date":
+        userService.get_creation_date(args.username)
+    elif args.command == "get_last_login":
+        userService.get_last_login(args.username)
     elif args.command == "login":
-        # user_service.login(args.username, args.password)
-        print("login not implemented")
+        userService.login(args.username, args.password)
     elif args.command == "follow":
-        # social_service.follow(args.email)
-        print("follow not implemented")
+        userService.follow(args.email)
     elif args.command == "unfollow":
-        # social_service.unfollow(args.email)
-        print("unfollow not implemented")
+        userService.unfollow(args.email)
     elif args.command == "search_movies":
         if args.title:
-            # movie_service.search_by_title(args.title)
-            print("movie search by title not implemented")
+            movieService.search_by_title(args.title)
         elif args.release_date:
-            # movie_service.search_by_release_date(args.release_date)
-            print("release data not implemented")
+            movieService.search_by_release_date(args.release_date)
         elif args.cast:
-            # movie_service.search_by_cast(args.cast)
-            print("search by cast not implemented")
+            movieService.search_by_cast(args.cast)
         elif args.studio:
-            # movie_service.search_by_studio(args.studio)
-            print("search by studio not implemented")
+            movieService.search_by_studio(args.studio)
         elif args.genre:
-            # movie_service.search_by_genre(args.genre)
-            print("search by genre not setup")
+            movieService.search_by_genre(args.genre)
     elif args.command == "sort_movies":
-        # movie_service.sort_movies(args.by, args.order)
-        print("sort movies not implemented")
+        movieService.sort_movies(args.by, args.order)
     elif args.command == "watch_movie":
-        # movie_service.watch_movie(args.movie_id)
-        print("watch movie not implemented")
+        movieService.watch_movie(args.movie_id)
     elif args.command == "rate_movie":
-        # movie_service.rate_movie(args.movie_id, args.rating)
-        print("rate movie not implemented")
+        movieService.rate_movie(args.movie_id, args.rating)
     elif args.command == "create_collection":
-        # collection_service.create_collection(args.collection_name)
-        print("create collection not implemented")
+        collectionService.create_collection(args.collectionid, args.userid, args.collection_name)
     elif args.command == "add_to_collection":
-        # collection_service.add_to_collection(args.collection_name, args.movie_id)
-        print("add to collection not implemented")
+        collectionService.add_to_collection(args.collection_name, args.movie_id)
     elif args.command == "remove_from_collection":
-        # collection_service.remove_from_collection(args.collection_name, args.movie_id)
-        print("remove from collection not implemented")
+        collectionService.remove_from_collection(args.collection_name, args.movie_id)
     elif args.command == "list_collections":
-        # collection_service.list_collections()
-        print("list collections not implemented")
+        collectionService.list_collections(args.userid)
     elif args.command == "rename_collection":
-        # collection_service.rename_collection(args.old_name, args.new_name)
-        print("rename collection not implemented")
+        collectionService.rename_collection(args.old_name, args.new_name)
     elif args.command == "delete_collection":
-        # collection_service.delete_collection(args.collection_name)
-        print("delete collection not implemented")
+        collectionService.delete_collection(args.collection_name)
     elif args.command == "list_following":
-        # social_service.list_following()
-        print("list following not implemented")
+        userService.list_following()
     elif args.command == "list_followers":
-        # social_service.list_followers()
-        print("list followers not implemented")
+        userService.list_followers()
     elif args.command == "list_users":
-        # user_service.list_users()
-        print("list users not implemented")
+        userService.list_users()
     elif args.command == "list_movies":
-        # movie_service.list_movies()
-        print("list movies not implemented")
+        movieService.list_movies()
     else:
         parser.print_help()
 
@@ -236,3 +254,6 @@ def main():
         
 if __name__ == "__main__":
     main()
+
+# python3 cli.py register 
+# colin 123 colin cannell cjcannell35@gmail.com

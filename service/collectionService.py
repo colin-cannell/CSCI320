@@ -12,7 +12,7 @@ class CollectionService:
             print(f"Database connection error: {e}")
             return None
 
-    def create_collection(self, user_id, collection_name):
+    def create_collection(self, collection_id,  user_id, collection_name):
         connection = self.connect_db()
         if not connection:
             return False
@@ -20,11 +20,12 @@ class CollectionService:
         try:
             cursor = connection.cursor()
             query = sql.SQL("""
-                            INSERT INTO collections (user_id, name) 
-                            VALUES (%s, %s)
+                            INSERT INTO collection (collectionid, userid, Name) 
+                            VALUES (%s, %s, %s)
                             """)
-            cursor.execute(query, (user_id, collection_name))
+            cursor.execute(query, (collection_id, user_id, collection_name))
             connection.commit()
+            print("Collection created successfully.")
             return True
         except psycopg2.Error as e:
             print(f"Error creating collection: {e}")
@@ -84,10 +85,18 @@ class CollectionService:
         try:
             cursor = connection.cursor()
             query = sql.SQL("""
-                            SELECT name FROM collections WHERE user_id = %s
+                            SELECT name, totalmovies, totallength FROM collection WHERE userid = %s
                             """)
             cursor.execute(query, (user_id,))
-            return [row[0] for row in cursor.fetchall()]
+            collections = cursor.fetchall()
+            if not collections:
+                print("No collections found.")
+                return False
+            for collection in sorted(collections):
+                print(collection)
+            print("Collections listed successfully.")
+            return True
+
         except psycopg2.Error as e:
             print(f"Error listing collections: {e}")
             return []
