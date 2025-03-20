@@ -54,7 +54,6 @@ def load_movies_from_csv(file_path):
             # print(f"studio {studio}")
             # print(f"mpaa_rating {mpaa_rating}")
 
-
             movie = Movie(title=title, genre=genre, release_platform=release_platform, release_date=release_date, length=length, cast=cast, directors=directors, studio=studio, mpaa_rating=mpaa_rating)
 
             movies.append(movie)

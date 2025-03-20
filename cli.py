@@ -37,65 +37,9 @@ db_params = {
     "port": 40000  # Match SSH tunnel port
 }
 
-from sshtunnel import SSHTunnelForwarder
-import psycopg2
-
 username = "cjc1985"
 password = "Calamity2023!"
 db_name = "p32001_21"
-
-
-def connect_db():
-    try:
-        with SSHTunnelForwarder(
-            ("starbug.cs.rit.edu", 22),
-            user=username,
-            password=password,  # Use SSH key if possible
-            host="localhost",
-            remote_bind_address=("localhost", 5432)) as server:
-        
-            server.start()
-            print(f"SSH tunnel established. Local port: {server.local_bind_port}")
-            params = {
-                'dbname': db_name,
-                'user': username,
-                'password': password,
-                'host': 'localhost',
-                'port': server.local_bind_port
-            }
-            connection = psycopg2.connect(**params)
-            curs = connection.cursor()
-            print ("Connection established")
-
-            return connection
-    except Exception as e:
-        print(f"Error connecting to database: {e}")
-        return None
-
-        
-def execute_query(query):
-    connection = connect_db()
-    if not connection:
-        return
-
-    try:
-        cursor = connection.cursor()
-        cursor.execute(query)
-        
-        if query.strip().upper().startswith("SELECT"):
-            results = cursor.fetchall()
-            for row in results:
-                print(row)
-        else:
-            connection.commit()
-            print("✅ Query executed successfully.")
-    
-    except psycopg2.Error as e:
-        print(f"❌ Query error: {e}")
-    
-    finally:
-        cursor.close()
-        connection.close()
 
 def main():
     parser = argparse.ArgumentParser(description="Movie Database CLI")

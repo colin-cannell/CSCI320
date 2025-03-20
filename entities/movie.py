@@ -17,8 +17,8 @@ class Movie:
         self.mpaa_rating = mpaa_rating
 
     def __str__(self):
-        return self.title
-    
+        return f"Movie({self.title}, {self.release_date}, {self.studio}, {self.genre}, {self.release_platform}, {self.length}, {self.mpaa_rating}, {self.cast}, {self.directors})"
+        
     def get_release_date(self):
         return self.release_date.strftime("%B %d, %Y")
     
