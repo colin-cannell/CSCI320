@@ -116,14 +116,13 @@ for movie in movies:
 
     # Ensure all studios exist
     studio_ids = []
-    for studio in movie.studio:
-        studio_obj = studioService.get_studio(studio)
-        if studio_obj:
-            studio_ids.append(studio_obj[0])
-        else:
-            studioService.add_studio(studio)
-            studio_obj = studioService.get_studio(studio)
-            studio_ids.append(studio_obj[0])
+    studio_obj = studioService.get_studio(movie.studio)
+    if studio_obj:
+        studio_ids.append(studio_obj[0])
+    else:
+        studioService.add_studio(movie.studio)
+        studio_obj = studioService.get_studio(movie.studio)
+        studio_ids.append(studio_obj[0])
 
             
 

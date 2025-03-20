@@ -26,7 +26,6 @@ class StudioService:
                             """)
             cursor.execute(query, (studio_name,))
             connection.commit()
-            print("Studio added successfully.")
             return True
         except psycopg2.Error as e:
             print(f"Error adding studio: {e}")
