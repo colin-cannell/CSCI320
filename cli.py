@@ -197,21 +197,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-"""
-python3 cli.py search_movies --title "Inception"
-python3 cli.py search_movies --release_date 2010-07-16
-python3 cli.py search_movies --cast "Leonardo DiCaprio"
-python3 cli.py search_movies --studio "Warner Bros"
-python3 cli.py search_movies --genre "Sci-Fi"
-
-(1, 'Economic election indicate', 157, 'R', datetime.date(2023, 4, 20))
-(2, 'Foot bring', 119, 'X', datetime.date(2017, 7, 25))
-(3, 'Human notice', 180, 'PG-13', datetime.date(2019, 5, 14))
-(4, 'Left to bill', 119, 'NR', datetime.date(2015, 2, 24))
-(5, 'Team attack fire goal', 124, 'G', datetime.date(2015, 4, 30))
-(6, 'Thing weight', 80, 'PG', datetime.date(2017, 12, 27))
-(7, 'War hit', 91, 'NR', datetime.date(2020, 12, 9))
-(8, 'Rest fire', 161, 'G', datetime.date(2015, 10, 16))
-(9, 'Among camera experience', 125, 'G', datetime.date(2017, 6, 2))
-(10, 'Because left nor', 84, 'PG', datetime.date(2024, 5, 10))
-"""
