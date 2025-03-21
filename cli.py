@@ -32,13 +32,13 @@ from service.collectionService import CollectionService
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": "______",
-    "password": "______",
+    "user": "wk3521",
+    "password": "Robloxbabe27!",
     "port": 40000  # Match SSH tunnel port
 }
 
-username = "_____"
-password = "_____"
+username = "wk3521"
+password = "Robloxbabe27!"
 db_name = "p32001_21"
 
 # Initialize services
@@ -100,6 +100,7 @@ def main():
     
     # Rate movie command
     rate_parser = subparsers.add_parser("rate_movie", help="Rate a movie")
+    rate_parser.add_argument("userid", help="User ID")
     rate_parser.add_argument("movie_id", help="ID of movie to rate")
     rate_parser.add_argument("rating", type=float, help="Rating (0-5)")
     
@@ -126,6 +127,11 @@ def main():
     
     delete_col_parser = subparsers.add_parser("delete_collection", help="Delete a collection")
     delete_col_parser.add_argument("collection_name", help="Name of collection to delete")
+
+    watch_col_parser = subparsers.add_parser("watch_collection", help="Watch all movies in a collection")
+    watch_col_parser.add_argument("userid", help="User ID")
+    watch_col_parser.add_argument("collectionid", help="Collection ID")
+
     
     # Social commands
     subparsers.add_parser("list_following", help="List users you follow")
@@ -166,7 +172,7 @@ def main():
     elif args.command == "watch_movie":
         userService.watch_movie(args.userid, args.movie_id)
     elif args.command == "rate_movie":
-        userService.rate_movie(args.movie_id, args.rating)
+        userService.rate_movie(args.userid, args.movie_id, args.rating)
     elif args.command == "create_collection":
         collectionService.create_collection(args.collectionid, args.userid, args.collection_name)
     elif args.command == "add_to_collection":
