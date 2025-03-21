@@ -32,13 +32,13 @@ from service.collectionService import CollectionService
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": "wk3521",
-    "password": "Robloxbabe27!",
+    "user": "",
+    "password": "",
     "port": 40000  # Match SSH tunnel port
 }
 
-username = "wk3521"
-password = "Robloxbabe27!"
+username = ""
+password = ""
 db_name = "p32001_21"
 
 # Initialize services
@@ -153,9 +153,9 @@ def main():
     elif args.command == "login":
         userService.login(args.username, args.password)
     elif args.command == "follow":
-        socialService.follow(args.email)
+        userService.follow(args.email)
     elif args.command == "unfollow":
-        socialService.unfollow(args.email)
+        userService.unfollow(args.email)
     elif args.command == "search_movies":
         if args.title:
             movieService.search_by_title(args.title)
@@ -188,9 +188,9 @@ def main():
     elif args.command == "watch_collection":
         userService.watch_collection(args.userid, args.collectionid)
     elif args.command == "list_following":
-        socialService.list_following()
+        userService.list_following()
     elif args.command == "list_followers":
-        socialService.list_followers()
+        userService.list_followers()
     elif args.command == "list_users":
         userService.list_users()
     elif args.command == "list_movies":
