@@ -182,3 +182,28 @@ class UserService:
         finally:
             cursor.close()
             connection.close()
+
+
+    def watch_movie(self, user_id, movie_id):
+        connection = self.connect_db()
+        if not connection:
+            return False
+        
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                            INSERT INTO watchhistory (user_id, movie_id, watched_at)
+                            VALUES (%s, %s, CURRENT_TIMESTAMP)
+                            ON CONFLICT (user_id, movie_id) DO UPDATE 
+                            SET watched_at = EXCLUDED.watched_at
+                            """)
+            cursor.execute(query, (user_id, movie_id))
+            connection.commit()
+            print(f"User {user_id} watched movie {movie_id}.")
+            return True
+        except psycopg2.Error as e:
+            print(f"Error recording watched movie: {e}")
+            return False
+        finally:
+            cursor.close()
+            connection.close()

@@ -280,6 +280,38 @@ class MovieService:
         except psycopg2.Error as e:
             print(f"Error adding movie actor: {e}")
             return False
+
+    def watch_collection(self, user_id, collection_id):
+        connection = self.connect_db()
+        if not connection:
+            return False
         
-        
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                            INSERT INTO watchhistory (user_id, movie_id, watched_at)
+                            SELECT %s, movie_id, CURRENT_TIMESTAMP
+                            FROM movies WHERE collection_id = %s
+                            ON CONFLICT (user_id, movie_id) DO UPDATE 
+                            SET watched_at = EXCLUDED.watched_at
+                            """)
+            cursor.execute(query, (user_id, collection_id))
+            connection.commit()
+            print(f"User {user_id} watched collection {collection_id}.")
+            return True
+        except psycopg2.Error as e:
+            print(f"Error recording watched collection: {e}")
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+
+    def rate_movie(self, user_id, movie_id, rating):
+        if rating < 1 or rating > 5:
+            print("Rating must be between 1 and 5.")
+            return False
+
+        connection = self.connect_db()
+        if not connection:
+            return False
     

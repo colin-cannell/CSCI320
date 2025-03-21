@@ -32,20 +32,20 @@ from service.collectionService import CollectionService
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": "cjc1985",
-    "password": "Calamity2023!",
+    "user": "______",
+    "password": "______",
     "port": 40000  # Match SSH tunnel port
 }
 
-username = "cjc1985"
-password = "Calamity2023!"
+username = "_____"
+password = "_____"
 db_name = "p32001_21"
 
 # Initialize services
 userService = UserService(db_params)
 movieService = MovieService(db_params)
 collectionService = CollectionService(db_params)
-socialService = SocialService(db_params)
+# socialService = SocialService(db_params)
 
 
 def main():
@@ -95,6 +95,7 @@ def main():
     
     # Watch movie command
     watch_parser = subparsers.add_parser("watch_movie", help="Watch a movie")
+    watch_parser.add_argument("userid", help="user id")
     watch_parser.add_argument("movie_id", help="ID of movie to watch")
     
     # Rate movie command
@@ -163,9 +164,9 @@ def main():
     elif args.command == "sort_movies":
         movieService.sort_movies(args.by, args.order)
     elif args.command == "watch_movie":
-        movieService.watch_movie(args.movie_id)
+        userService.watch_movie(args.userid, args.movie_id)
     elif args.command == "rate_movie":
-        movieService.rate_movie(args.movie_id, args.rating)
+        userService.rate_movie(args.movie_id, args.rating)
     elif args.command == "create_collection":
         collectionService.create_collection(args.collectionid, args.userid, args.collection_name)
     elif args.command == "add_to_collection":
@@ -178,6 +179,8 @@ def main():
         collectionService.rename_collection(args.old_name, args.new_name)
     elif args.command == "delete_collection":
         collectionService.delete_collection(args.collection_name)
+    elif args.command == "watch_collection":
+        userService.watch_collection(args.userid, args.collectionid)
     elif args.command == "list_following":
         socialService.list_following()
     elif args.command == "list_followers":
