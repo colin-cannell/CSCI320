@@ -45,6 +45,7 @@ db_name = "p32001_21"
 userService = UserService(db_params)
 movieService = MovieService(db_params)
 collectionService = CollectionService(db_params)
+socialService = SocialService(db_params)
 
 
 def main():
@@ -135,12 +136,6 @@ def main():
     
     args = parser.parse_args()
     
-    # Initialize service objects
-    userService = UserService(db_params)
-    movieService = MovieService(db_params)
-    collectionService = CollectionService(db_params)
-    # social_service = SocialService()
-    
     # Handle commands
     if args.command == "register":
         userService.register(args.username, args.password, args.first_name, args.last_name, args.email)
@@ -151,9 +146,9 @@ def main():
     elif args.command == "login":
         userService.login(args.username, args.password)
     elif args.command == "follow":
-        userService.follow(args.email)
+        socialService.follow(args.email)
     elif args.command == "unfollow":
-        userService.unfollow(args.email)
+        socialService.unfollow(args.email)
     elif args.command == "search_movies":
         if args.title:
             movieService.search_by_title(args.title)
@@ -184,9 +179,9 @@ def main():
     elif args.command == "delete_collection":
         collectionService.delete_collection(args.collection_name)
     elif args.command == "list_following":
-        userService.list_following()
+        socialService.list_following()
     elif args.command == "list_followers":
-        userService.list_followers()
+        socialService.list_followers()
     elif args.command == "list_users":
         userService.list_users()
     elif args.command == "list_movies":
