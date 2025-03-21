@@ -14,6 +14,9 @@ class GenreService:
             return None
         
     def add_genre(self, genre_name):
+        if isinstance(genre_name, list):
+            genre_name = genre_name[0]  # Get the first item in the list if it's a list
+        
         connection = self.connect_db()
         if not connection:
             return False
@@ -26,7 +29,6 @@ class GenreService:
                             """)
             cursor.execute(query, (genre_name,))
             connection.commit()
-            print("Genre added successfully.")
             return True
         except psycopg2.Error as e:
             print(f"Error adding genre: {e}")

@@ -117,7 +117,7 @@ class MovieService:
 
             for row in sorted(results, key=lambda x: (x[1], x[4])):  # Sorting by Title (index 1) and ReleaseDate (index 4)
                 print(f"MovieID: {row[0]}, Title: {row[1]}, Length: {row[2]} min, MPAA: {row[3]}, Release: {row[4]}, Director: {row[5]}, Cast: {row[6]}, Avg Rating: {row[7]}, Studio: {row[8]}")   
-                
+
             return results
         except psycopg2.Error as e:
             print(f"Error searching movies: {e}")
@@ -179,7 +179,7 @@ class MovieService:
             cursor = connection.cursor()
             query = "SELECT MovieID FROM Movie WHERE Name = %s"
             cursor.execute(query, (title,))
-            return cursor.fetchone()  # Fetch one movie, not all
+            return cursor.fetchone()
         except psycopg2.Error as e:
             print(f"Error fetching movie: {e}")
             return None

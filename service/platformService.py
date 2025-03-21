@@ -26,7 +26,6 @@ class PlatformService:
                             """)
             cursor.execute(query, (platform_name,))
             connection.commit()
-            print("Platform added successfully.")
             return True
         except psycopg2.Error as e:
             print(f"Error adding platform: {e}")

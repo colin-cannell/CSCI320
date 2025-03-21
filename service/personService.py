@@ -26,7 +26,6 @@ class PersonService:
                             """)
             cursor.execute(query, (first_name, last_name))
             connection.commit()
-            print("Person added successfully.")
             return True
         except psycopg2.Error as e:
             print(f"Error adding person: {e}")

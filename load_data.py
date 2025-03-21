@@ -18,7 +18,6 @@ def safe_parse_list(data):
         return data.split(", ") if ", " in data else [data]  # Convert to a list if it's a simple string
     return [data]  # If not a string, just return the data in a list
 
-
 def load_movies_from_csv(file_path):
     movies = []
 
@@ -26,8 +25,11 @@ def load_movies_from_csv(file_path):
         reader = csv.DictReader(csvfile)
         for row in reader:
             title = row.get('Title', 'Unknown')
-            genre = safe_parse_list(row.get('Genre', 'Unknown'))
-            release_platform = row.get('Release Platform', 'Unknown')
+
+            # Ensure genre is a string, not a list
+            genre = row.get('Genre', 'Unknown').strip()
+
+            release_platform = row.get('Release Platform', 'Unknown').strip()
 
             release_date_str = row.get('Release Date', '').strip()
             try:
@@ -40,25 +42,24 @@ def load_movies_from_csv(file_path):
 
             mpaa_rating = row.get('MPAA Rating', 'NR')
 
+            # Ensure cast and directors are lists
             cast = safe_parse_list(row.get('Cast Members', 'Unknown'))
             directors = safe_parse_list(row.get('Directors', 'Unknown'))
-            studio = row.get('Studios', 'Unknown')
+            studio = row.get('Studios', 'Unknown').strip()  # Ensure studio is a string, not a list
 
-            # print(f"title {title}")
-            # print(f"genre {genre}")
-            # print(f"release_platform {release_platform}")
-            # print(f"release_date {release_date}")
-            # print(f"length {length}")
-            # print(f"cast {cast}")
-            # print(f"directors {directors}")
-            # print(f"studio {studio}")
-            # print(f"mpaa_rating {mpaa_rating}")
-
-            movie = Movie(title=title, genre=genre, release_platform=release_platform, release_date=release_date, length=length, cast=cast, directors=directors, studio=studio, mpaa_rating=mpaa_rating)
+            # Create the movie object
+            movie = Movie(
+                title=title, 
+                genre=genre, 
+                release_platform=release_platform, 
+                release_date=release_date, 
+                length=length, 
+                cast=cast, 
+                directors=directors, 
+                studio=studio, 
+                mpaa_rating=mpaa_rating
+            )
 
             movies.append(movie)
 
     return movies
-
-
-

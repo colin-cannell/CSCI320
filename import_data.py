@@ -54,7 +54,7 @@ def execute_query(query, params=None, fetch=False):
 
 # Load movie data
 filepath = "movies_dataset.csv"
-movies = load_movies_from_csv(filepath)[:10]
+movies = load_movies_from_csv(filepath)
 
 personService = PersonService(db_params)
 studioService = StudioService(db_params)
@@ -68,14 +68,21 @@ for movie in movies:
     # Ensure all actors exist in the database
     actor_ids = []
     for actor in movie.cast:
-        first, last = actor.split(" ")
-        person = personService.get_person(first, last)
-        if person:
-            actor_ids.append(person[0])
+        if len(actor.split(" ")) > 2:
+            first, last = actor.split(" ")[0], actor.split(" ")[-1]
         else:
+            first, last = actor.split(" ")
+
+        person = personService.get_person(first, last)
+        if not person:  # If the person is not found, add them first
             personService.add_person(first, last)
             person = personService.get_person(first, last)
+        
+        if person:  # Ensure person is valid before accessing index 0
             actor_ids.append(person[0])
+        else:
+            print(f"Error: Could not retrieve or add person '{first} {last}'")
+
 
     # Ensure all directors exist in the database
     director_ids = []
@@ -85,54 +92,56 @@ for movie in movies:
         else:
             first, last = director.split(" ")
         person = personService.get_person(first, last)
-        if person:
-            director_ids.append(person[0])
-        else:
+        if person is None:  # If the person is not found, add them first
             personService.add_person(first, last)
             person = personService.get_person(first, last)
+        
+        if person:  # Ensure person is valid before accessing index 0
             director_ids.append(person[0])
+        else:
+            print(f"Error: Could not retrieve or add person '{first} {last}'")
 
     # Ensure all genres exist
     genre_ids = []
-    for genre in movie.genre:
-        genre_obj = genreService.get_genre(genre)
-        if genre_obj:
-            genre_ids.append(genre_obj[0])
-        else:
-            genreService.add_genre(genre)
-            genre_obj = genreService.get_genre(genre)
-            genre_ids.append(genre_obj[0])
+    genre_obj = genreService.get_genre(movie.genre)
+    if not genre_obj:
+        genreService.add_genre(movie.genre)
+        genre_obj = genreService.get_genre(movie.genre)
+    
+    if genre_obj:
+        genre_ids.append(genre_obj[0])
+    else:
+        print(f"Error: Could not retrieve or add genre '{movie.genre}'")
 
     # Ensure all platforms exist
     platform_ids = []
-    for platform in movie.release_platform:
-        platform_obj = platformService.get_platform(platform)
-        if platform_obj:
-            platform_ids.append(platform_obj[0])
-        else:
-            platformService.add_platform(platform)
-            platform_obj = platformService.get_platform(platform)
-            platform_ids.append(platform_obj[0])
+    platform_obj = platformService.get_platform(movie.release_platform)
+    if not platform_obj:
+        platformService.add_platform(movie.release_platform)
+        platform_obj = platformService.get_platform(movie.release_platform)
+    
+    if platform_obj:
+        platform_ids.append(platform_obj[0])
+    else:
+        print(f"Error: Could not retrieve or add platform '{movie.release_platform}'")
 
     # Ensure all studios exist
     studio_ids = []
     studio_obj = studioService.get_studio(movie.studio)
+    if not studio_obj:
+        studioService.add_studio(movie.studio)
+        studio_obj = studioService.get_studio(movie.studio)
+    
     if studio_obj:
         studio_ids.append(studio_obj[0])
     else:
-        studioService.add_studio(movie.studio)
-        studio_obj = studioService.get_studio(movie.studio)
-        studio_ids.append(studio_obj[0])
-
-            
+        print(f"Error: Could not retrieve or add studio '{movie.studio}'")
 
     # Add the movie if it doesn't exist
     movie_obj = movieService.get_movie(movie.title)
-    if movie_obj:
-        movie_id = movie_obj[0]
+    if not movie_obj:
+        movie_id = movieService.add_movie(movie.title, movie.length, movie.mpaa_rating, movie.release_date)
     else:
-        movieService.add_movie(movie.title, movie.length, movie.mpaa_rating, movie.release_date)
-        movie_obj = movieService.get_movie(movie.title)
         movie_id = movie_obj[0]
     
     # Link movie to genres
