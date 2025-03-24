@@ -1,6 +1,5 @@
 import psycopg2
 from psycopg2 import sql
-from service.personService import PersonService
 
 class MovieService:
     def __init__(self, db_params):
@@ -206,7 +205,6 @@ class MovieService:
             print(f"Error adding movie genre: {e}")
             return False
         
-
     def add_movie_studio(self, movie_id, studio_id):
         connection = self.connect_db()
         if not connection:
@@ -281,5 +279,61 @@ class MovieService:
             print(f"Error adding movie actor: {e}")
             return False
         
+    def get_movie_id_by_title(self, title):
+            connection = self.connect_db()
+            if not connection:
+                return None
+
+            try:
+                cursor = connection.cursor()
+                query = "SELECT MovieID FROM Movie WHERE Name = %s"
+                cursor.execute(query, (title,))
+                return cursor.fetchone()
+            except psycopg2.Error as e:
+                print(f"Error fetching movie ID: {e}")
+                return None
+            finally:
+                cursor.close()
+                connection.close()
+
+    def watch_movie(self, movie_id, user_id):
+        connection = self.connect_db()
+        if not connection:
+            return False
         
-    
+        try:
+            cursor = connection.cursor()
+            query = """
+                INSERT INTO watchHistory (MovieID, userID) 
+                VALUES (%s, %s) ON CONFLICT DO NOTHING
+            """
+            cursor.execute(query, (movie_id,user_id))
+            connection.commit()
+            return True
+        except psycopg2.Error as e:
+            print(f"Error watching movie: {e}")
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+
+    def rate_movie(self, userid, movie_id, rating):
+        connection = self.connect_db()
+        if not connection:
+            return False
+        
+        try:
+            cursor = connection.cursor()
+            query = """
+                INSERT INTO MovieRating (MovieID, userid, Rating) 
+                VALUES (%s, %s, %s) ON CONFLICT DO NOTHING
+            """
+            cursor.execute(query, (movie_id, userid,  rating))
+            connection.commit()
+            return True
+        except psycopg2.Error as e:
+            print(f"Error rating movie: {e}")
+            return False
+        finally:
+            cursor.close()
+            connection.close()
