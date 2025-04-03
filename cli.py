@@ -8,19 +8,20 @@ from service.collectionService import CollectionService
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": "cjc1985",
-    "password": "Calamity2023!",
+    "user": "",
+    "password": "",
     "port": 40000  # Match SSH tunnel port
 }
 
-username = "cjc1985"
-password = "Calamity2023!"
+username = ""
+password = ""
 db_name = "p32001_21"
 
 # Initialize services
 userService = UserService(db_params)
 movieService = MovieService(db_params)
 collectionService = CollectionService(db_params)
+# socialService = SocialService(db_params)
 
 def create_parser():
     parser = argparse.ArgumentParser(description="Movie Database CLI")
@@ -40,6 +41,13 @@ def create_parser():
     get_last_login_parser = subparsers.add_parser("get_last_login", help="Get user last login date")
     get_last_login_parser.add_argument("username")
 
+    get_creation_date_parser = subparsers.add_parser("get_creation_date", help="Get user creation date")
+    get_creation_date_parser.add_argument("username", help="Username")
+
+    get_last_login_date_parser = subparsers.add_parser("get_last_login", help="Get user last login date")
+    get_last_login_date_parser.add_argument("username", help="Username")
+    
+    # Login command
     login_parser = subparsers.add_parser("login", help="Login to the system")
     login_parser.add_argument("username")
     login_parser.add_argument("password")
@@ -184,4 +192,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-  

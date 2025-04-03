@@ -211,3 +211,75 @@ class UserService:
         finally:
             cursor.close()
             connection.close()
+
+
+    def watch_movie(self, userid, movieid):
+        connection = self.connect_db()
+        if not connection:
+            return False
+        
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                            INSERT INTO watchhistory (movieid, userid, date)
+                            VALUES (%s, %s, CURRENT_TIMESTAMP)
+                            """)
+            cursor.execute(query, (movieid, userid))
+            connection.commit()
+            print(f"User {userid} watched movie {movieid}.")
+            return True
+        except psycopg2.Error as e:
+            print(f"Error recording watched movie: {e}")
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+
+    def watch_collection(self, userid, collectionid):
+       connection = self.connect_db()
+       if not connection:
+           return False
+      
+       try:
+           cursor = connection.cursor()
+           query = sql.SQL("""
+                           INSERT INTO watchhistory (movieid, userid, date)
+                           SELECT %s, movieid, CURRENT_TIMESTAMP
+                           FROM collectionmovie WHERE collectionid = %s AND movieid = movieid
+                           """)
+           cursor.execute(query, (userid, collectionid))
+           connection.commit()
+           print(f"User {userid} watched collection {collectionid}.")
+           return True
+       except psycopg2.Error as e:
+           print(f"Error recording watched collection: {e}")
+           return False
+       finally:
+           cursor.close()
+           connection.close()
+
+    def rate_movie(self, userid, movieid, rating):
+       if rating < 1 or rating > 5:
+           print("Rating must be between 1 and 5.")
+           return False
+
+       connection = self.connect_db()
+       if not connection:
+           return False
+
+       try:
+           cursor = connection.cursor()
+           query = sql.SQL("""
+                           INSERT INTO movierating (movieid, userid, rating)
+                           VALUES (%s, %s, %s)
+                           """)
+           cursor.execute(query, (movieid, userid, rating))
+           connection.commit()
+           print(f"User {userid} rated movie {movieid} with a {rating}.")
+           return True
+       except psycopg2.Error as e:
+           print(f"Error rating movie: {e}")
+           return False
+       finally:
+           cursor.close()
+           connection.close()

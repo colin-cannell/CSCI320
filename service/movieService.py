@@ -278,7 +278,12 @@ class MovieService:
         except psycopg2.Error as e:
             print(f"Error adding movie actor: {e}")
             return False
-        
+
+    def watch_collection(self, user_id, collection_id):
+        connection = self.connect_db()
+        if not connection:
+            return False
+
     def get_movie_id_by_title(self, title):
             connection = self.connect_db()
             if not connection:
@@ -312,6 +317,7 @@ class MovieService:
             return True
         except psycopg2.Error as e:
             print(f"Error watching movie: {e}")
+
             return False
         finally:
             cursor.close()
@@ -337,3 +343,4 @@ class MovieService:
         finally:
             cursor.close()
             connection.close()
+
