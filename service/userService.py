@@ -21,6 +21,29 @@ class UserService:
         except Exception as e:
             print(f"Error connecting to database: {e}")
             return None
+    
+    def get_user_id(self, username):
+        connection = self.connect_db()
+        if not connection:
+            return None
+        
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                            SELECT UserID FROM "User" WHERE Username = %s
+                        """)
+            cursor.execute(query, (username,))
+            result = cursor.fetchone()
+            if result:
+                return result[0]
+            else:
+                return None
+        except psycopg2.Error as e:
+            print(f"Error fetching user ID: {e}")
+            return None
+        finally:
+            cursor.close()
+            connection.close()
         
     def register(self, username, password, first_name, last_name, email):
         connection = self.connect_db()
@@ -87,18 +110,21 @@ class UserService:
             cursor.close()
             connection.close()
 
-    def follow(self, follower_email, followee_email):
+    def follow(self, userid, following_username):
         connection = self.connect_db()
         if not connection:
             return False
 
         try:
+            following_id = self.get_user_id(following_username)
+            
+
             cursor = connection.cursor()
             query = sql.SQL("""
-                            INSERT INTO follows (follower_email, followee_email)
+                            INSERT INTO following  (userid, followingid)
                             VALUES (%s, %s)
                             """)
-            cursor.execute(query, (follower_email, followee_email))
+            cursor.execute(query, (userid, following_id))
             connection.commit()
             return True
         except psycopg2.Error as e:
@@ -108,17 +134,20 @@ class UserService:
             cursor.close()
             connection.close()
 
-    def unfollow(self, follower_email, followee_email):
+    def unfollow(self, username, following_username):
         connection = self.connect_db()
         if not connection:
             return False
 
         try:
+            userid = self.get_user_id(username)
+            following_id = self.get_user_id(following_username)
+
             cursor = connection.cursor()
             query = sql.SQL("""
-                            DELETE FROM follows WHERE follower_email = %s AND followee_email = %s
+                            DELETE FROM following WHERE userid = %s AND followingid = %s
                             """)
-            cursor.execute(query, (follower_email, followee_email))
+            cursor.execute(query, (userid, following_id))
             connection.commit()
             return True
         except psycopg2.Error as e:
