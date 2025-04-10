@@ -113,6 +113,13 @@ def create_parser():
     # Movie listing command
     subparsers.add_parser("list_movies", help="List all movies")
 
+    # Popular movies command
+    popular_movies_parser = subparsers.add_parser("popular_movies", help="Show top 20 popular movies in the last 90 days")
+    popular_movies_parser.add_argument("--followed", action="store_true", help="Show popular movies among users you follow")
+    
+    # New releases command
+    subparsers.add_parser("new_releases", help="Show top 5 new releases of the current month")
+
     # Exit command
     subparsers.add_parser("exit", help="Exit the application")
 
@@ -183,6 +190,16 @@ def main():
                 userService.list_users()
             elif args.command == "list_movies":
                 movieService.list_movies()
+            elif args.command == "popular_movies":
+                if args.followed and user_id:
+                    print("Showing popular movies among users you follow:")
+                    movieService.get_popular_movies_from_followed_users(user_id)
+                else:
+                    print("Showing popular movies from the last 90 days:")
+                    movieService.get_popular_movies_last_90_days()
+            elif args.command == "new_releases":
+                print("Showing top new releases for this month:")
+                movieService.get_top_new_releases_of_month()
             elif args.command == "exit":
                 print("Exiting...")
                 break
