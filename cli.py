@@ -3,18 +3,19 @@ import argparse
 from service.userService import UserService
 from service.movieService import MovieService
 from service.collectionService import CollectionService
+import os
 
 # Import modules for handling business logic
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": "",
-    "password": "",
+    "user": os.getenv("DB_USER", ""), # export DB_USER="your_RIT_username"
+    "password": os.getenv("DB_PASSWORD", ""), # export DB_PASSWORD="your_RIT_password"
     "port": 40000  # Match SSH tunnel port
 }
 
-username = ""
-password = ""
+username = os.getenv("DB_USER", "")
+password = os.getenv("DB_PASSWORD", "")
 db_name = "p32001_21"
 
 # Initialize services
@@ -183,6 +184,16 @@ def main():
                 userService.list_users()
             elif args.command == "list_movies":
                 movieService.list_movies()
+            elif args.command == "popular_movies":
+                if args.followed and user_id:
+                    print("Showing popular movies among users you follow:")
+                    movieService.get_popular_movies_from_followed_users(user_id)
+                else:
+                    print("Showing popular movies from the last 90 days:")
+                    movieService.get_popular_movies_last_90_days()
+            elif args.command == "new_releases":
+                print("Showing top new releases for this month:")
+                movieService.get_top_new_releases_of_month()
             elif args.command == "exit":
                 print("Exiting...")
                 break

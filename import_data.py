@@ -5,13 +5,15 @@ from service.studioService import StudioService
 from service.movieService import MovieService
 from service.genreService import GenreService
 from service.platformService import PlatformService
+import os
+
 
 # Database connection parameters
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": "cjc1985",
-    "password": "Calamity2023!",
+    "user": os.getenv("DB_USER", ""),  # export DB_USER="your_RIT_username"
+    "password": os.getenv("DB_PASSWORD", ""),  # export DB_PASSWORD="your_RIT_password"
     "port": 40000
 }
 
