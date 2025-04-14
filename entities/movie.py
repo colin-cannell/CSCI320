@@ -49,5 +49,17 @@ class Movie:
     def get_title(self):
         return self.title
     
+    def get_top_movies_by_user(self, user_id, limit=10):
+        query = """
+            SELECT m.title, wm.rating, wm.plays
+            FROM watched_movies wm
+            JOIN movies m ON wm.movie_id = m.id
+            WHERE wm.user_id = %s
+            ORDER BY wm.rating DESC, wm.plays DESC
+            LIMIT %s
+        """
+        self.cursor.execute(query, (user_id, limit))
+        return self.cursor.fetchall()
+        
 
     

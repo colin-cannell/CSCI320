@@ -283,3 +283,28 @@ class UserService:
        finally:
            cursor.close()
            connection.close()
+
+    def show_user_profile(self):
+        user = self.auth.get_current_user()  # assuming you're logged in
+
+        if not user:
+            print("You must be logged in to view your profile.")
+            return
+
+        # number of collections
+        collections = self.collection_repo.get_collections_by_user(user["id"])
+        print(f"Collections: {len(collections)}")
+
+        # followers
+        followers = self.social_repo.get_followers(user["id"])
+        print(f"Followers: {len(followers)}")
+
+        # following
+        following = self.social_repo.get_following(user["id"])
+        print(f"Following: {len(following)}")
+
+        # top 10 movies
+        top_movies = self.movie_repo.get_top_movies_by_user(user["id"], limit=10)
+        print("Top 10 Movies:")
+        for movie in top_movies:
+            print(f"- {movie['title']} (Rating: {movie['rating']}, Plays: {movie['plays']})")

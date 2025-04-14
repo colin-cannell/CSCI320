@@ -108,6 +108,9 @@ def create_parser():
     # Movie listing command
     subparsers.add_parser("list_movies", help="List all movies")
 
+    # User profile command
+    subparsers.add_parser("user_profile", help="Show the user's profile summary")
+
     # Exit command
     subparsers.add_parser("exit", help="Exit the application")
 
@@ -188,6 +191,9 @@ def main():
             elif args.command == "new_releases":
                 print("Showing top new releases for this month:")
                 movieService.get_top_new_releases_of_month()
+            elif args.command == "user_profile":
+                user_service = UserService()
+                user_service.show_user_profile()
             elif args.command == "exit":
                 print("Exiting...")
                 break
