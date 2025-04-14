@@ -41,12 +41,6 @@ def create_parser():
 
     get_last_login_parser = subparsers.add_parser("get_last_login", help="Get user last login date")
     get_last_login_parser.add_argument("username")
-
-    get_creation_date_parser = subparsers.add_parser("get_creation_date", help="Get user creation date")
-    get_creation_date_parser.add_argument("username", help="Username")
-
-    get_last_login_date_parser = subparsers.add_parser("get_last_login", help="Get user last login date")
-    get_last_login_date_parser.add_argument("username", help="Username")
     
     # Login command
     login_parser = subparsers.add_parser("login", help="Login to the system")
