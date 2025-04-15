@@ -3,24 +3,26 @@ import argparse
 from service.userService import UserService
 from service.movieService import MovieService
 from service.collectionService import CollectionService
+from service.recommendationService import RecommendationService
 
 # Import modules for handling business logic
-db_params = {
-    "host": "127.0.0.1",
-    "database": "p32001_21",
-    "user": "cjc1985",
-    "password": "Calamity2023!",
-    "port": 40000  # Match SSH tunnel port
-}
+
 
 username = "cjc1985"
 password = "Calamity2023!"
-db_name = "p32001_21"
 
+db_params = {
+    "host": "127.0.0.1",
+    "database": "p32001_21",
+    "user": username,
+    "password": password,
+    "port": 40000  # Match SSH tunnel port
+}
 # Initialize services
 userService = UserService(db_params)
 movieService = MovieService(db_params)
 collectionService = CollectionService(db_params)
+recommendationService = RecommendationService(db_params)
 
 def create_parser():
     parser = argparse.ArgumentParser(description="Movie Database CLI")
@@ -108,6 +110,10 @@ def create_parser():
     # Exit command
     subparsers.add_parser("exit", help="Exit the application")
 
+    # reccomendation
+    reccomendation = subparsers.add_parser("rec", help="Get movie recommendations")
+    reccomendation.add_argument("userid")
+
     return parser
 
 def main():
@@ -175,6 +181,8 @@ def main():
                 userService.list_users()
             elif args.command == "list_movies":
                 movieService.list_movies()
+            elif args.command == "rec":
+                recommendationService.recommendation(args.userid)
             elif args.command == "exit":
                 print("Exiting...")
                 break

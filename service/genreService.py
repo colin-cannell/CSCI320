@@ -56,3 +56,23 @@ class GenreService:
         finally:
             cursor.close()
             connection.close()
+
+    def get_all_genres(self):
+        connection = self.connect_db()
+        if not connection:
+            return None
+        
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                            SELECT * FROM Genre
+                            """)
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return result
+        except psycopg2.Error as e:
+            print(f"Error fetching genres: {e}")
+            return None
+        finally:
+            cursor.close()
+            connection.close()
