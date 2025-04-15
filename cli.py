@@ -24,8 +24,16 @@ movieService = MovieService(db_params)
 collectionService = CollectionService(db_params)
 # socialService = SocialService(db_params)
 
+class CustomArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise argparse.ArgumentError(None, message)
+    
+    def exit(self, status=0, message=None):
+        if message:
+            print(message)
+
 def create_parser():
-    parser = argparse.ArgumentParser(description="Movie Database CLI")
+    parser = CustomArgumentParser(description="Movie Database CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
     # User-related commands
