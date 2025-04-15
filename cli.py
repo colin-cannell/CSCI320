@@ -5,6 +5,8 @@ from service.movieService import MovieService
 from service.collectionService import CollectionService
 import os
 
+logged_in_user_id = None
+
 # Import modules for handling business logic
 db_params = {
     "host": "127.0.0.1",
@@ -192,8 +194,19 @@ def main():
                 print("Showing top new releases for this month:")
                 movieService.get_top_new_releases_of_month()
             elif args.command == "user_profile":
-                user_service = UserService()
-                user_service.show_user_profile()
+                if not user_id:
+                    print("You must be logged in to view your profile.")
+                    continue
+                try:
+                    profile = userService.get_user_profile_info(user_id)
+                    print(f"Collections: {profile['collection_count']}")
+                    print(f"Followers: {profile['followers_count']}")
+                    print(f"Following: {profile['following_count']}")
+                    print("Top 10 Movies (by rating, then play count):")
+                    for i, (title, rating, plays) in enumerate(profile["top_movies"], 1):
+                        print(f"  {i}. {title} — Rating: {rating}, Plays: {plays}")
+                except Exception as e:
+                    print(f"Failed to load profile: {e}")
             elif args.command == "exit":
                 print("Exiting...")
                 break

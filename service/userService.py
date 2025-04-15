@@ -308,3 +308,37 @@ class UserService:
         print("Top 10 Movies:")
         for movie in top_movies:
             print(f"- {movie['title']} (Rating: {movie['rating']}, Plays: {movie['plays']})")
+    def get_user_profile_info(self, user_id):
+        try:
+            with psycopg2.connect(**self.params) as conn:
+                with conn.cursor() as cur:
+                    profile = {}
+
+                    # Number of collections
+                    cur.execute("SELECT COUNT(*) FROM collections WHERE userid = %s", (user_id,))
+                    profile['collection_count'] = cur.fetchone()[0]
+
+                    # Followers
+                    cur.execute("SELECT COUNT(*) FROM follows WHERE followee_id = %s", (user_id,))
+                    profile['followers_count'] = cur.fetchone()[0]
+
+                    # Following
+                    cur.execute("SELECT COUNT(*) FROM follows WHERE follower_id = %s", (user_id,))
+                    profile['following_count'] = cur.fetchone()[0]
+
+                    # Top 10 movies by rating then play count
+                    cur.execute("""
+                        SELECT m.title, r.rating, w.play_count
+                        FROM movies m
+                        JOIN ratings r ON m.movieid = r.movieid
+                        JOIN watched w ON m.movieid = w.movieid
+                        WHERE r.userid = %s AND w.userid = %s
+                        ORDER BY r.rating DESC, w.play_count DESC
+                        LIMIT 10
+                    """, (user_id, user_id))
+                    profile['top_movies'] = cur.fetchall()
+
+                    return profile
+        except Exception as e:
+            print(f"Database error in get_user_profile_info: {e}")
+            return None
