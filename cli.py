@@ -5,8 +5,6 @@ from service.movieService import MovieService
 from service.collectionService import CollectionService
 import os
 
-logged_in_user_id = None
-
 # Import modules for handling business logic
 db_params = {
     "host": "127.0.0.1",
