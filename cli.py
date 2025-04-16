@@ -116,6 +116,9 @@ def create_parser():
     # Movie listing command
     subparsers.add_parser("list_movies", help="List all movies")
 
+    # User profile command
+    subparsers.add_parser("user_profile", help="Show the user's profile summary")
+
     # Exit command
     subparsers.add_parser("exit", help="Exit the application")
 
@@ -196,6 +199,20 @@ def main():
             elif args.command == "new_releases":
                 print("Showing top new releases for this month:")
                 movieService.get_top_new_releases_of_month()
+            elif args.command == "user_profile":
+                if not user_id:
+                    print("You must be logged in to view your profile.")
+                    continue
+                try:
+                    profile = userService.get_user_profile_info(user_id)
+                    print(f"Collections: {profile['collection_count']}")
+                    print(f"Followers: {profile['followers_count']}")
+                    print(f"Following: {profile['following_count']}")
+                    print("Top 10 Movies (by rating, then play count):")
+                    for i, (title, rating, plays) in enumerate(profile["top_movies"], 1):
+                        print(f"  {i}. {title} — Rating: {rating}, Plays: {plays}")
+                except Exception as e:
+                    print(f"Failed to load profile: {e}")
             elif args.command == "exit":
                 print("Exiting...")
                 break
