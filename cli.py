@@ -3,9 +3,15 @@ import argparse
 from service.userService import UserService
 from service.movieService import MovieService
 from service.collectionService import CollectionService
+from service.recommendationService import RecommendationService
 import os
 
 # Import modules for handling business logic
+
+
+username = "cjc1985"
+password = "Calamity2023!"
+
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
@@ -121,6 +127,10 @@ def create_parser():
 
     # Exit command
     subparsers.add_parser("exit", help="Exit the application")
+
+    # reccomendation
+    reccomendation = subparsers.add_parser("rec", help="Get movie recommendations")
+    reccomendation.add_argument("userid")
 
     return parser
 
