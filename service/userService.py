@@ -12,11 +12,11 @@ def check_password(password, hashed):
 
 class UserService:
     def __init__(self, db_params):
-        self.params = db_params
+        self.db_params = db_params
 
     def connect_db(self):
         try:
-            conn = psycopg2.connect(**self.params)
+            conn = psycopg2.connect(**self.db_params)
             return conn
         except Exception as e:
             print(f"Error connecting to database: {e}")
@@ -212,4 +212,122 @@ class UserService:
             cursor.close()
             connection.close()
 
-    
+
+    def watch_movie(self, userid, movieid):
+        connection = self.connect_db()
+        if not connection:
+            return False
+        
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                            INSERT INTO watchhistory (movieid, userid, date)
+                            VALUES (%s, %s, CURRENT_TIMESTAMP)
+                            """)
+            cursor.execute(query, (movieid, userid))
+            connection.commit()
+            print(f"User {userid} watched movie {movieid}.")
+            return True
+        except psycopg2.Error as e:
+            print(f"Error recording watched movie: {e}")
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+
+    def watch_collection(self, userid, collectionid):
+       connection = self.connect_db()
+       if not connection:
+           return False
+      
+       try:
+           cursor = connection.cursor()
+           query = sql.SQL("""
+                           INSERT INTO watchhistory (movieid, userid, date)
+                           SELECT %s, movieid, CURRENT_TIMESTAMP
+                           FROM collectionmovie WHERE collectionid = %s AND movieid = movieid
+                           """)
+           cursor.execute(query, (userid, collectionid))
+           connection.commit()
+           print(f"User {userid} watched collection {collectionid}.")
+           return True
+       except psycopg2.Error as e:
+           print(f"Error recording watched collection: {e}")
+           return False
+       finally:
+           cursor.close()
+           connection.close()
+
+    def rate_movie(self, userid, movieid, rating):
+       if rating < 1 or rating > 5:
+           print("Rating must be between 1 and 5.")
+           return False
+
+       connection = self.connect_db()
+       if not connection:
+           return False
+
+       try:
+           cursor = connection.cursor()
+           query = sql.SQL("""
+                           INSERT INTO movierating (movieid, userid, rating)
+                           VALUES (%s, %s, %s)
+                           """)
+           cursor.execute(query, (movieid, userid, rating))
+           connection.commit()
+           print(f"User {userid} rated movie {movieid} with a {rating}.")
+           return True
+       except psycopg2.Error as e:
+           print(f"Error rating movie: {e}")
+           return False
+       finally:
+           cursor.close()
+           connection.close()
+
+    def get_user_profile_info(self, user_id):
+        try:
+            conn = psycopg2.connect(**self.db_params)
+            cur = conn.cursor()
+
+            # Number of collections
+            cur.execute("SELECT COUNT(*) FROM collection WHERE userid = %s", (user_id,))
+            collection_count = cur.fetchone()[0]
+
+            # Following count
+            cur.execute("SELECT COUNT(*) FROM following WHERE userid = %s", (user_id,))
+            following_count = cur.fetchone()[0]
+
+            # Follower count
+            cur.execute("SELECT COUNT(*) FROM following WHERE followingid = %s", (user_id,))
+            followers_count = cur.fetchone()[0]
+
+            # Top 10 movies (by rating, then play count)
+            cur.execute("""
+                SELECT m.name, r.rating, COUNT(w.date) as play_count
+                FROM movierating r
+                JOIN movie m ON r.movieid = m.movieid
+                LEFT JOIN watchhistory w ON m.movieid = w.movieid AND w.userid = r.userid
+                WHERE r.userid = %s
+                GROUP BY m.name, r.rating
+                ORDER BY r.rating DESC, play_count DESC
+                LIMIT 10
+            """, (user_id,))
+            top_movies = cur.fetchall()
+
+            return {
+                "collection_count": collection_count,
+                "following_count": following_count,
+                "followers_count": followers_count,
+                "top_movies": top_movies
+            }
+
+        except Exception as e:
+            print(f"Database error in get_user_profile_info: {e}")
+            return None
+
+        finally:
+            try:
+                cur.close()
+                conn.close()
+            except:
+                pass

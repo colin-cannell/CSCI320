@@ -7,14 +7,16 @@ from service.studioService import StudioService
 from service.movieService import MovieService
 from service.genreService import GenreService
 from service.platformService import PlatformService
+import os
+
 
 # Import modules for handling business logic
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": "cjc1985",
-    "password": "Calamity2023!",
-    "port": 40000  # Match SSH tunnel port
+    "user": os.getenv("DB_USER", ""),  # export DB_USER="your_RIT_username"
+    "password": os.getenv("DB_PASSWORD", ""),  # export DB_PASSWORD="your_RIT_password"
+    "port": 40000
 }
 
 username = "cjc1985"
