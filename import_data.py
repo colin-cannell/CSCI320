@@ -19,8 +19,8 @@ db_params = {
     "port": 40000
 }
 
-username = "cjc1985"
-password = "Calamity2023!"
+username = os.getenv("DB_USER", "")
+password = os.getenv("DB_PASSWORD", "")
 db_name = "p32001_21"
 
 def connect_db(self):
