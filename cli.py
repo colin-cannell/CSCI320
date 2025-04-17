@@ -12,22 +12,21 @@ import os
 username = "cjc1985"
 password = "Calamity2023!"
 
+
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": os.getenv("DB_USER", ""), # export DB_USER="your_RIT_username"
-    "password": os.getenv("DB_PASSWORD", ""), # export DB_PASSWORD="your_RIT_password"
+    "user": username, # export DB_USER="your_RIT_username"
+    "password": password, # export DB_PASSWORD="your_RIT_password"
     "port": 40000  # Match SSH tunnel port
 }
 
-username = os.getenv("DB_USER", "")
-password = os.getenv("DB_PASSWORD", "")
-db_name = "p32001_21"
 
 # Initialize services
 userService = UserService(db_params)
 movieService = MovieService(db_params)
 collectionService = CollectionService(db_params)
+recommendationService = RecommendationService(db_params)
 # socialService = SocialService(db_params)
 
 class CustomArgumentParser(argparse.ArgumentParser):
@@ -130,7 +129,16 @@ def create_parser():
 
     # reccomendation
     reccomendation = subparsers.add_parser("rec", help="Get movie recommendations")
-    reccomendation.add_argument("userid")
+    reccomendation.add_argument("user_id")
+    
+
+    new_releases = subparsers.add_parser("new_releases", help="Get new releases")
+
+    popular_movies = subparsers.add_parser("popular_movies", help="Get popular movies")
+    popular_movies.add_argument("--followed", action="store_true", help="Show popular movies among followed users")
+
+    get_movie_details = subparsers.add_parser("get_movie_details", help="Get details of a movie")
+    get_movie_details.add_argument("movie_id")
 
     return parser
 
@@ -199,10 +207,26 @@ def main():
                 userService.list_users()
             elif args.command == "list_movies":
                 movieService.list_movies()
+            elif args.command == "get_movie_details":
+                movieService.get_movie_details(args.movie_id)
+            elif args.command == "rec":
+                if not user_id:
+                    print("You must be logged in to get recommendations.")
+                    continue
+                try:
+                    # reformat reccomendations to be more structured and not just 
+                    # 87 [77, 'G', datetime.date(2008, 10, 21), [4], 6, 383, [380, 381, 382], [3]] 4.173728813559322
+                    recommendationService.recommendation(args.user_id)
+                except Exception as e:
+                    print(f"Failed to get recommendations: {e}")
             elif args.command == "popular_movies":
                 if args.followed and user_id:
                     print("Showing popular movies among users you follow:")
-                    movieService.get_popular_movies_from_followed_users(user_id)
+                    followed_users = userService.get_followed_users(user_id)
+                    if not followed_users:
+                        print("You are not following anyone.")
+                    else:
+                        movieService.get_popular_movies_from_followed_users(followed_users)
                 else:
                     print("Showing popular movies from the last 90 days:")
                     movieService.get_popular_movies_last_90_days()
@@ -232,3 +256,5 @@ def main():
 if __name__ == "__main__":
     main()
 
+# popular_movies --followed
+    

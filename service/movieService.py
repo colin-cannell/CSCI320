@@ -1,5 +1,6 @@
 import psycopg2
 from psycopg2 import sql
+from datetime import datetime, timedelta
 
 class MovieService:
     def __init__(self, db_params):
@@ -145,14 +146,17 @@ class MovieService:
         """Search for movies by genre."""
         return self.search_movies(genre=genre)
     
-    def add_movie(self, title, length, mpaa_rating, release_date):
+    def add_movie(self, conn, title, length, mpaa_rating, release_date):
         """Insert a movie into the Movie table."""
-        connection = self.connect_db()
+        connection = conn
+        
         if not connection:
             return False
 
+        cursor = connection.cursor()
+
+
         try:
-            cursor = connection.cursor()
             query = """
                 INSERT INTO Movie (Name, Length, MpaaRating, ReleaseDate) 
                 VALUES (%s, %s, %s, %s) RETURNING MovieID
@@ -163,14 +167,11 @@ class MovieService:
             return movie_id
         except psycopg2.Error as e:
             print(f"Error adding movie: {e}")
-            return False
-        finally:
-            cursor.close()
-            connection.close()
+            return False  
 
-    def get_movie(self, title):
+    def get_movie(self, conn, title):
         """Retrieve a movie by title."""
-        connection = self.connect_db()
+        connection = conn
         if not connection:
             return None
 
@@ -182,13 +183,11 @@ class MovieService:
         except psycopg2.Error as e:
             print(f"Error fetching movie: {e}")
             return None
-        finally:
-            cursor.close()
-            connection.close()
-
-    def add_movie_genre(self, movie_id, genre_id):
+        
+    def add_movie_genre(self, conn, movie_id, genre_id):
         """Link a movie to a genre."""
-        connection = self.connect_db()
+        connection = conn
+
         if not connection:
             return False
         
@@ -205,8 +204,9 @@ class MovieService:
             print(f"Error adding movie genre: {e}")
             return False
         
-    def add_movie_studio(self, movie_id, studio_id):
-        connection = self.connect_db()
+    def add_movie_studio(self, conn, movie_id, studio_id):
+        connection = conn
+
         if not connection:
             return False
         
@@ -223,8 +223,9 @@ class MovieService:
             print(f"Error adding movie studio: {e}")
             return False
 
-    def add_movie_platform(self, movie_id, platform_id):
-        connection = self.connect_db()
+    def add_movie_platform(self,conn,  movie_id, platform_id):
+        connection = conn
+
         if not connection:
             return False
         
@@ -241,9 +242,9 @@ class MovieService:
             print(f"Error adding movie platform: {e}")
             return False
         
+    def add_movie_director(self, conn, movie_id, person_id):
+        connection = conn
 
-    def add_movie_director(self, movie_id, person_id):
-        connection = self.connect_db()
         if not connection:
             return False
         
@@ -260,9 +261,8 @@ class MovieService:
             print(f"Error adding movie director: {e}")
             return False
         
-       
-    def add_movie_actor(self, movie_id, person_id):
-        connection = self.connect_db()
+    def add_movie_actor(self, conn, movie_id, person_id):
+        connection = conn
         if not connection:
             return False
         
@@ -344,3 +344,185 @@ class MovieService:
             cursor.close()
             connection.close()
 
+    def get_top_new_releases_of_month(self):
+        connection = self.connect_db()
+        if not connection:
+            return []
+
+        try:
+            cursor = connection.cursor()
+            query = """
+                SELECT m.MovieID, m.Name, m.Length, m.MpaaRating, m.ReleaseDate
+                FROM Movie m
+                WHERE m.ReleaseDate >= date_trunc('month', CURRENT_DATE) - interval '1 month'
+                ORDER BY m.ReleaseDate DESC
+                LIMIT 5
+            """
+            cursor.execute(query)
+            results = cursor.fetchall()
+            movies = []
+            for row in results:
+                id = row[0]
+                query = """
+                select rating
+                from movierating mr
+                where mr.MovieID = %s
+                """
+                cursor.execute(query, (id,))
+                rating = cursor.fetchone()
+                if rating:
+                    movies.append((row[0], row[1], row[2], row[3], row[4], rating[0]))
+                else:
+                    movies.append((row[0], row[1], row[2], row[3], row[4], 0))
+
+            movies = sorted(movies, key=lambda x: x[5], reverse=True)[:5]  # Get top 5 movies
+            for movie in movies:
+                print(f"MovieID: {movie[0]}, Title: {movie[1]}, Length: {movie[2]} min, MPAA: {movie[3]}, Release: {movie[4]}, Rating: {movie[5]}")
+            return movies
+        except psycopg2.Error as e:
+            print(f"Error fetching top new releases of the month: {e}")
+            return []
+
+    def get_popular_movies_from_followed_users(self, following):
+        conn = self.connect_db()
+        if not conn:
+            return []
+
+        try:
+            movies = []
+            cursor = conn.cursor()
+            for person in following:
+                query = """
+                    select MovieID, rating
+                    from movierating mr
+                    where mr.userid = %s and rating > 5
+                """
+                cursor.execute(query, (person,))
+                results = cursor.fetchall()
+                for row in results:
+                    movie_id = row[0]
+                    rating = row[1]
+                    movies.append((movie_id, rating))
+                
+            movies = sorted(movies, key=lambda x: x[1], reverse=True)[:10]  # Get top 5 movies
+            movie_ids = [movie[0] for movie in movies]
+            res = []
+            for movie_id in movie_ids:
+                query = """
+                    select m.MovieID, m.Name, m.Length, m.MpaaRating, m.ReleaseDate
+                    from Movie m
+                    where m.MovieID = %s
+                """
+                cursor.execute(query, (movie_id,))
+                movie_info = cursor.fetchone()
+                if movie_info:
+                    res.append(movie_info)
+            for movie in res:
+                print(f"MovieID: {movie[0]}, Title: {movie[1]}, Length: {movie[2]} min, MPAA: {movie[3]}, Release: {movie[4]}")
+            return res 
+        except psycopg2.Error as e:
+            print(f"Error fetching popular movies from followed users: {e}")
+            return []
+
+    def get_popular_movies_last_90_days(self):
+        date = datetime.now() - timedelta(days=90)
+        connection = self.connect_db()
+        if not connection:
+            return []
+        try:
+            cursor = connection.cursor()
+            query = """
+                SELECT m.MovieID, m.Name, m.Length, m.MpaaRating, m.ReleaseDate
+                FROM Movie m
+                JOIN MovieRating mr ON m.MovieID = mr.MovieID
+                WHERE mr.Rating > 5 AND m.ReleaseDate >= %s
+            """
+            cursor.execute(query, (date,))
+            results = cursor.fetchall()
+
+            for row in results:
+                print(f"MovieID: {row[0]}, Title: {row[1]}, Length: {row[2]} min, MPAA: {row[3]}, Release: {row[4]}")
+            return results
+        except psycopg2.Error as e:
+            print(f"Error fetching popular movies from last 90 days: {e}")
+            return []
+        
+
+    def get_movie_details(self, movie_id):
+        conn = self.connect_db()
+        if not conn:
+            return None
+        
+        try:
+            cursor = conn.cursor()
+            
+            # Basic movie info
+            movie_query = """
+                SELECT m.MovieID, m.Name, m.Length, m.MpaaRating, m.ReleaseDate
+                FROM Movie m
+                WHERE m.MovieID = %s
+            """
+            cursor.execute(movie_query, (movie_id,))
+            movie = cursor.fetchone()
+
+            if not movie:
+                return None
+
+            # Helper to fetch related names
+            def fetch_names(query, movie_id):
+                cursor.execute(query, (movie_id,))
+                return [row[0] for row in cursor.fetchall()]
+
+            # Directors
+            director_query = """
+                SELECT CONCAT(p.FirstName, ' ', p.LastName)
+                FROM MovieDirector md
+                JOIN Person p ON md.PersonID = p.PersonID
+                WHERE md.MovieID = %s
+            """
+            directors = fetch_names(director_query, movie_id)
+
+            # Actors
+            actor_query = """
+                SELECT CONCAT(p.FirstName, ' ', p.LastName)
+                FROM MovieActor ma
+                JOIN Person p ON ma.PersonID = p.PersonID
+                WHERE ma.MovieID = %s
+            """
+            actors = fetch_names(actor_query, movie_id)
+
+            # Genres
+            genre_query = """
+                SELECT g.Name
+                FROM MovieGenre mg
+                JOIN Genre g ON mg.GenreID = g.GenreID
+                WHERE mg.MovieID = %s
+            """
+            genres = fetch_names(genre_query, movie_id)
+
+            # Studios
+            studio_query = """
+                SELECT s.Name
+                FROM MovieStudio ms
+                JOIN Studio s ON ms.StudioID = s.StudioID
+                WHERE ms.MovieID = %s
+            """
+            studios = fetch_names(studio_query, movie_id)
+
+            # Platforms
+            platform_query = """
+                SELECT p.Name
+                FROM MoviePlatform mp
+                JOIN Platform p ON mp.PlatformID = p.PlatformID
+                WHERE mp.MovieID = %s
+            """
+            platforms = fetch_names(platform_query, movie_id)
+
+            # Build final response
+            print(f"MovieID: {movie[0]}, Title: {movie[1]}, Length: {movie[2]} min, MPAA: {movie[3]}, Release: {movie[4]}, Directors: {', '.join(directors)}, Actors: {', '.join(actors)}, Genres: {', '.join(genres)}, Studios: {', '.join(studios)}, Platforms: {', '.join(platforms)}")
+
+            return True
+
+        finally:
+            cursor.close()
+            conn.close()
