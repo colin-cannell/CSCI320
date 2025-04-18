@@ -62,7 +62,6 @@ def create_parser():
 
     unfollow_parser = subparsers.add_parser("unfollow", help="Unfollow a user")
     unfollow_parser.add_argument("user")
-    unfollow_parser.add_argument("unfollow")
 
     # Movie search and sorting
     search_parser = subparsers.add_parser("search_movies", help="Search for movies")
@@ -162,7 +161,7 @@ def main():
             elif args.command == "follow":
                 userService.follow(user_id, args.follow)
             elif args.command == "unfollow":
-                userService.unfollow(user_id, args.unfollow)
+                userService.unfollow(user_id, args.user)
             elif args.command == "search_movies":
                 if args.title:
                     movieService.search_by_title(args.title)
@@ -183,7 +182,7 @@ def main():
             elif args.command == "rate_movie":
                 movieService.rate_movie(user_id, args.movie_id, args.rating)
             elif args.command == "create_collection":
-                collectionService.create_collection(args.collectionid, user_id.userid, args.collection_name)
+                collectionService.create_collection(args.collectionid, user_id, args.collection_name)
             elif args.command == "add_to_collection":
                 collectionService.add_to_collection(user_id, args.collectionid, args.movie_name)
             elif args.command == "remove_from_collection":

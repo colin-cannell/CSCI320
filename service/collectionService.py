@@ -14,11 +14,14 @@ class CollectionService:
             print(f"Database connection error: {e}")
             return None
 
-    def create_collection(self, collection_id,  user_id, collection_name):
+    def create_collection(self, collection_id, user_id, collection_name):
         connection = self.connect_db()
         if not connection:
+            print("No connection")
             return False
-        
+        if not user_id:
+            print("Not logged in")
+            return False
         try:
             cursor = connection.cursor()
             query = sql.SQL("""

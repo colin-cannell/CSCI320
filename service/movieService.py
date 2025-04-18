@@ -351,7 +351,6 @@ class MovieService:
         
         try:
             cursor = connection.cursor()
-            
             query = """
             SELECT 
                 m.MovieID,
@@ -363,13 +362,13 @@ class MovieService:
                 COALESCE(actors.CastMembers, 'N/A') AS Cast,
                 COALESCE(NULLIF(user_ratings.AvgRating, NULL)::TEXT, 'N/A') AS AvgUserRating,
                 COALESCE(studios.StudioNames, 'N/A') AS Studio,
-                COUNT(w.WatchID) as ViewCount
-            FROM Movie m
-            JOIN WatchHistory w ON m.MovieID = w.MovieID
+                COUNT(*) as ViewCount
+            FROM p32001_21.Movie m
+            JOIN p32001_21.WatchHistory w ON m.MovieID = w.MovieID
             LEFT JOIN (
                 SELECT md.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS DirectorNames
-                FROM MovieDirector md
-                JOIN Person p ON md.PersonID = p.PersonID
+                FROM p32001_21.MovieDirector md
+                JOIN p32001_21.Person p ON md.PersonID = p.PersonID
                 GROUP BY md.MovieID
             ) AS directors ON m.MovieID = directors.MovieID
             LEFT JOIN (
@@ -389,7 +388,7 @@ class MovieService:
                 JOIN Studio s ON ms.StudioID = s.StudioID
                 GROUP BY ms.MovieID
             ) AS studios ON m.MovieID = studios.MovieID
-            WHERE w.WatchDate >= CURRENT_DATE - INTERVAL '90 days'
+            WHERE w.date >= CURRENT_DATE - INTERVAL '90 days'
             GROUP BY m.MovieID, m.Name, m.Length, m.MpaaRating, m.ReleaseDate, 
                     directors.DirectorNames, actors.CastMembers, user_ratings.AvgRating, studios.StudioNames
             ORDER BY ViewCount DESC
