@@ -53,3 +53,23 @@ class StudioService:
         finally:
             cursor.close()
             connection.close()
+    
+    def get_all_studios(self):
+        connection = self.connect_db()
+        if not connection:
+            return None
+        
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                            SELECT * FROM Studio
+                            """)
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return result
+        except psycopg2.Error as e:
+            print(f"Error fetching studios: {e}")
+            return None
+        finally:
+            cursor.close()
+            connection.close()

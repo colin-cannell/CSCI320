@@ -70,3 +70,23 @@ class PersonService:
         finally:
             cursor.close()
             connection.close()
+
+    def get_all_people(self):
+        connection = self.connect_db()
+        if not connection:
+            return None
+        
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                            SELECT * FROM Person
+                            """)
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return result
+        except psycopg2.Error as e:
+            print(f"Error fetching people: {e}")
+            return None
+        finally:
+            cursor.close()
+            connection.close()

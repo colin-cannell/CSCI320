@@ -3,18 +3,25 @@ import argparse
 from service.userService import UserService
 from service.movieService import MovieService
 from service.collectionService import CollectionService
+from service.recommendationService import RecommendationService
+import os
 
 # Import modules for handling business logic
+
+
+username = "cjc1985"
+password = "Calamity2023!"
+
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
-    "user": "",
-    "password": "",
+    "user": os.getenv("DB_USER", ""), # export DB_USER="your_RIT_username"
+    "password": os.getenv("DB_PASSWORD", ""), # export DB_PASSWORD="your_RIT_password"
     "port": 40000  # Match SSH tunnel port
 }
 
-username = ""
-password = ""
+username = os.getenv("DB_USER", "")
+password = os.getenv("DB_PASSWORD", "")
 db_name = "p32001_21"
 
 # Initialize services
@@ -23,8 +30,16 @@ movieService = MovieService(db_params)
 collectionService = CollectionService(db_params)
 # socialService = SocialService(db_params)
 
+class CustomArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise argparse.ArgumentError(None, message)
+    
+    def exit(self, status=0, message=None):
+        if message:
+            print(message)
+
 def create_parser():
-    parser = argparse.ArgumentParser(description="Movie Database CLI")
+    parser = CustomArgumentParser(description="Movie Database CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
     # User-related commands
@@ -40,12 +55,6 @@ def create_parser():
 
     get_last_login_parser = subparsers.add_parser("get_last_login", help="Get user last login date")
     get_last_login_parser.add_argument("username")
-
-    get_creation_date_parser = subparsers.add_parser("get_creation_date", help="Get user creation date")
-    get_creation_date_parser.add_argument("username", help="Username")
-
-    get_last_login_date_parser = subparsers.add_parser("get_last_login", help="Get user last login date")
-    get_last_login_date_parser.add_argument("username", help="Username")
     
     # Login command
     login_parser = subparsers.add_parser("login", help="Login to the system")
@@ -120,8 +129,15 @@ def create_parser():
     # New releases command
     subparsers.add_parser("new_releases", help="Show top 5 new releases of the current month")
 
+    # User profile command
+    subparsers.add_parser("user_profile", help="Show the user's profile summary")
+
     # Exit command
     subparsers.add_parser("exit", help="Exit the application")
+
+    # reccomendation
+    reccomendation = subparsers.add_parser("rec", help="Get movie recommendations")
+    reccomendation.add_argument("userid")
 
     return parser
 
@@ -200,6 +216,20 @@ def main():
             elif args.command == "new_releases":
                 print("Showing top new releases for this month:")
                 movieService.get_top_new_releases_of_month()
+            elif args.command == "user_profile":
+                if not user_id:
+                    print("You must be logged in to view your profile.")
+                    continue
+                try:
+                    profile = userService.get_user_profile_info(user_id)
+                    print(f"Collections: {profile['collection_count']}")
+                    print(f"Followers: {profile['followers_count']}")
+                    print(f"Following: {profile['following_count']}")
+                    print("Top 10 Movies (by rating, then play count):")
+                    for i, (title, rating, plays) in enumerate(profile["top_movies"], 1):
+                        print(f"  {i}. {title} — Rating: {rating}, Plays: {plays}")
+                except Exception as e:
+                    print(f"Failed to load profile: {e}")
             elif args.command == "exit":
                 print("Exiting...")
                 break

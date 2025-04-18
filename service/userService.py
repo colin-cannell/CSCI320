@@ -12,11 +12,11 @@ def check_password(password, hashed):
 
 class UserService:
     def __init__(self, db_params):
-        self.params = db_params
+        self.db_params = db_params
 
     def connect_db(self):
         try:
-            conn = psycopg2.connect(**self.params)
+            conn = psycopg2.connect(**self.db_params)
             return conn
         except Exception as e:
             print(f"Error connecting to database: {e}")
@@ -283,3 +283,51 @@ class UserService:
        finally:
            cursor.close()
            connection.close()
+
+    def get_user_profile_info(self, user_id):
+        try:
+            conn = psycopg2.connect(**self.db_params)
+            cur = conn.cursor()
+
+            # Number of collections
+            cur.execute("SELECT COUNT(*) FROM collection WHERE userid = %s", (user_id,))
+            collection_count = cur.fetchone()[0]
+
+            # Following count
+            cur.execute("SELECT COUNT(*) FROM following WHERE userid = %s", (user_id,))
+            following_count = cur.fetchone()[0]
+
+            # Follower count
+            cur.execute("SELECT COUNT(*) FROM following WHERE followingid = %s", (user_id,))
+            followers_count = cur.fetchone()[0]
+
+            # Top 10 movies (by rating, then play count)
+            cur.execute("""
+                SELECT m.name, r.rating, COUNT(w.date) as play_count
+                FROM movierating r
+                JOIN movie m ON r.movieid = m.movieid
+                LEFT JOIN watchhistory w ON m.movieid = w.movieid AND w.userid = r.userid
+                WHERE r.userid = %s
+                GROUP BY m.name, r.rating
+                ORDER BY r.rating DESC, play_count DESC
+                LIMIT 10
+            """, (user_id,))
+            top_movies = cur.fetchall()
+
+            return {
+                "collection_count": collection_count,
+                "following_count": following_count,
+                "followers_count": followers_count,
+                "top_movies": top_movies
+            }
+
+        except Exception as e:
+            print(f"Database error in get_user_profile_info: {e}")
+            return None
+
+        finally:
+            try:
+                cur.close()
+                conn.close()
+            except:
+                pass
