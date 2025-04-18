@@ -496,7 +496,7 @@ class MovieService:
                 COALESCE(actors.CastMembers, 'N/A') AS Cast,
                 COALESCE(NULLIF(user_ratings.AvgRating, NULL)::TEXT, 'N/A') AS AvgUserRating,
                 COALESCE(studios.StudioNames, 'N/A') AS Studio,
-                COUNT(w.WatchID) as ViewCount
+                COUNT(*) as ViewCount
             FROM Movie m
             LEFT JOIN WatchHistory w ON m.MovieID = w.MovieID
             LEFT JOIN (

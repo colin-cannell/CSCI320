@@ -98,10 +98,10 @@ class UserService:
                     print("Login successful.")
                     return True
                 else:
-                    print("print Login failed. Incorrect password.")
+                    print("Login failed. Incorrect password.")
                     return False
             else:
-                print("print Login failed. User not found.")
+                print("Login failed. User not found.")
                 return False
         except psycopg2.Error as e:
             print(f"Error logging in: {e}")
