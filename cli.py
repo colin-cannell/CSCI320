@@ -8,10 +8,6 @@ import os
 
 # Import modules for handling business logic
 
-
-username = "cjc1985"
-password = "Calamity2023!"
-
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
