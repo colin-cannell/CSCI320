@@ -344,3 +344,281 @@ class MovieService:
             cursor.close()
             connection.close()
 
+    def get_popular_movies_last_90_days(self):
+        connection = self.connect_db()
+        if not connection:
+            return []
+        
+        try:
+            cursor = connection.cursor()
+            query = """
+            SELECT 
+                m.MovieID,
+                m.Name,
+                m.Length,
+                m.MpaaRating,
+                m.ReleaseDate,
+                COALESCE(directors.DirectorNames, 'N/A') AS Director,
+                COALESCE(actors.CastMembers, 'N/A') AS Cast,
+                COALESCE(NULLIF(user_ratings.AvgRating, NULL)::TEXT, 'N/A') AS AvgUserRating,
+                COALESCE(studios.StudioNames, 'N/A') AS Studio,
+                COUNT(*) as ViewCount
+            FROM p32001_21.Movie m
+            JOIN p32001_21.WatchHistory w ON m.MovieID = w.MovieID
+            LEFT JOIN (
+                SELECT md.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS DirectorNames
+                FROM p32001_21.MovieDirector md
+                JOIN p32001_21.Person p ON md.PersonID = p.PersonID
+                GROUP BY md.MovieID
+            ) AS directors ON m.MovieID = directors.MovieID
+            LEFT JOIN (
+                SELECT ma.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS CastMembers
+                FROM MovieActor ma
+                JOIN Person p ON ma.PersonID = p.PersonID
+                GROUP BY ma.MovieID
+            ) AS actors ON m.MovieID = actors.MovieID
+            LEFT JOIN (
+                SELECT r.MovieID, ROUND(AVG(r.Rating), 1) AS AvgRating
+                FROM MovieRating r
+                GROUP BY r.MovieID
+            ) AS user_ratings ON m.MovieID = user_ratings.MovieID
+            LEFT JOIN (
+                SELECT ms.MovieID, STRING_AGG(s.Name, ', ') AS StudioNames
+                FROM MovieStudio ms
+                JOIN Studio s ON ms.StudioID = s.StudioID
+                GROUP BY ms.MovieID
+            ) AS studios ON m.MovieID = studios.MovieID
+            WHERE w.date >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY m.MovieID, m.Name, m.Length, m.MpaaRating, m.ReleaseDate, 
+                    directors.DirectorNames, actors.CastMembers, user_ratings.AvgRating, studios.StudioNames
+            ORDER BY ViewCount DESC
+            LIMIT 20
+            """
+            
+            cursor.execute(query)
+            results = cursor.fetchall()
+            
+            for row in results:
+                print(f"MovieID: {row[0]}, Title: {row[1]}, Length: {row[2]} min, MPAA: {row[3]}, Release: {row[4]}, Director: {row[5]}, Cast: {row[6]}, Avg Rating: {row[7]}, Studio: {row[8]}, Views: {row[9]}")
+                
+            return results
+        except psycopg2.Error as e:
+            print(f"Error retrieving popular movies: {e}")
+            return []
+        finally:
+            cursor.close()
+            connection.close()
+            
+    def get_popular_movies_from_followed_users(self, user_id):
+        connection = self.connect_db()
+        if not connection:
+            return []
+        
+        try:
+            cursor = connection.cursor()
+            
+            query = """
+            SELECT 
+                m.MovieID,
+                m.Name,
+                m.Length,
+                m.MpaaRating,
+                m.ReleaseDate,
+                COALESCE(directors.DirectorNames, 'N/A') AS Director,
+                COALESCE(actors.CastMembers, 'N/A') AS Cast,
+                COALESCE(NULLIF(user_ratings.AvgRating, NULL)::TEXT, 'N/A') AS AvgUserRating,
+                COALESCE(studios.StudioNames, 'N/A') AS Studio,
+                COUNT(w.WatchID) as ViewCount
+            FROM Movie m
+            JOIN WatchHistory w ON m.MovieID = w.MovieID
+            JOIN UserFollows uf ON w.UserID = uf.FolloweeID
+            LEFT JOIN (
+                SELECT md.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS DirectorNames
+                FROM MovieDirector md
+                JOIN Person p ON md.PersonID = p.PersonID
+                GROUP BY md.MovieID
+            ) AS directors ON m.MovieID = directors.MovieID
+            LEFT JOIN (
+                SELECT ma.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS CastMembers
+                FROM MovieActor ma
+                JOIN Person p ON ma.PersonID = p.PersonID
+                GROUP BY ma.MovieID
+            ) AS actors ON m.MovieID = actors.MovieID
+            LEFT JOIN (
+                SELECT r.MovieID, ROUND(AVG(r.Rating), 1) AS AvgRating
+                FROM MovieRating r
+                GROUP BY r.MovieID
+            ) AS user_ratings ON m.MovieID = user_ratings.MovieID
+            LEFT JOIN (
+                SELECT ms.MovieID, STRING_AGG(s.Name, ', ') AS StudioNames
+                FROM MovieStudio ms
+                JOIN Studio s ON ms.StudioID = s.StudioID
+                GROUP BY ms.MovieID
+            ) AS studios ON m.MovieID = studios.MovieID
+            WHERE uf.FollowerID = %s
+            GROUP BY m.MovieID, m.Name, m.Length, m.MpaaRating, m.ReleaseDate, 
+                    directors.DirectorNames, actors.CastMembers, user_ratings.AvgRating, studios.StudioNames
+            ORDER BY ViewCount DESC
+            LIMIT 20
+            """
+            
+            cursor.execute(query, (user_id,))
+            results = cursor.fetchall()
+            
+            for row in results:
+                print(f"MovieID: {row[0]}, Title: {row[1]}, Length: {row[2]} min, MPAA: {row[3]}, Release: {row[4]}, Director: {row[5]}, Cast: {row[6]}, Avg Rating: {row[7]}, Studio: {row[8]}, Views: {row[9]}")
+                
+            return results
+        except psycopg2.Error as e:
+            print(f"Error retrieving movies from followed users: {e}")
+            return []
+        finally:
+            cursor.close()
+            connection.close()
+
+    def get_top_new_releases_of_month(self):
+        connection = self.connect_db()
+        if not connection:
+            return []
+        
+        try:
+            cursor = connection.cursor()
+            
+            query = """
+            SELECT 
+                m.MovieID,
+                m.Name,
+                m.Length,
+                m.MpaaRating,
+                m.ReleaseDate,
+                COALESCE(directors.DirectorNames, 'N/A') AS Director,
+                COALESCE(actors.CastMembers, 'N/A') AS Cast,
+                COALESCE(NULLIF(user_ratings.AvgRating, NULL)::TEXT, 'N/A') AS AvgUserRating,
+                COALESCE(studios.StudioNames, 'N/A') AS Studio,
+                COUNT(*) as ViewCount
+            FROM Movie m
+            LEFT JOIN WatchHistory w ON m.MovieID = w.MovieID
+            LEFT JOIN (
+                SELECT md.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS DirectorNames
+                FROM MovieDirector md
+                JOIN Person p ON md.PersonID = p.PersonID
+                GROUP BY md.MovieID
+            ) AS directors ON m.MovieID = directors.MovieID
+            LEFT JOIN (
+                SELECT ma.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS CastMembers
+                FROM MovieActor ma
+                JOIN Person p ON ma.PersonID = p.PersonID
+                GROUP BY ma.MovieID
+            ) AS actors ON m.MovieID = actors.MovieID
+            LEFT JOIN (
+                SELECT r.MovieID, ROUND(AVG(r.Rating), 1) AS AvgRating
+                FROM MovieRating r
+                GROUP BY r.MovieID
+            ) AS user_ratings ON m.MovieID = user_ratings.MovieID
+            LEFT JOIN (
+                SELECT ms.MovieID, STRING_AGG(s.Name, ', ') AS StudioNames
+                FROM MovieStudio ms
+                JOIN Studio s ON ms.StudioID = s.StudioID
+                GROUP BY ms.MovieID
+            ) AS studios ON m.MovieID = studios.MovieID
+            WHERE EXTRACT(MONTH FROM m.ReleaseDate) = EXTRACT(MONTH FROM CURRENT_DATE)
+            AND EXTRACT(YEAR FROM m.ReleaseDate) = EXTRACT(YEAR FROM CURRENT_DATE)
+            GROUP BY m.MovieID, m.Name, m.Length, m.MpaaRating, m.ReleaseDate, 
+                    directors.DirectorNames, actors.CastMembers, user_ratings.AvgRating, studios.StudioNames
+            ORDER BY ViewCount DESC
+            LIMIT 5
+            """
+            
+            cursor.execute(query)
+            results = cursor.fetchall()
+            
+            for row in results:
+                print(f"MovieID: {row[0]}, Title: {row[1]}, Length: {row[2]} min, MPAA: {row[3]}, Release: {row[4]}, Director: {row[5]}, Cast: {row[6]}, Avg Rating: {row[7]}, Studio: {row[8]}, Views: {row[9]}")
+                
+            return results
+        except psycopg2.Error as e:
+            print(f"Error retrieving new releases: {e}")
+            return []
+        finally:
+            cursor.close()
+            connection.close()
+
+    def sort_movies(self, sort_by, order):
+        """Sort movies by specified criteria and order."""
+        connection = self.connect_db()
+        if not connection:
+            return []
+
+        try:
+            cursor = connection.cursor()
+            order_dir = "ASC" if order == "asc" else "DESC"
+            
+            # Base query with all joins
+            query = """
+            SELECT 
+                m.MovieID,
+                m.Name,
+                m.Length,
+                m.MpaaRating,
+                m.ReleaseDate,
+                COALESCE(directors.DirectorNames, 'N/A') AS Director,
+                COALESCE(actors.CastMembers, 'N/A') AS Cast,
+                COALESCE(NULLIF(user_ratings.AvgRating, NULL)::TEXT, 'N/A') AS AvgUserRating,
+                COALESCE(studios.StudioNames, 'N/A') AS Studio
+            FROM p32001_21.Movie m
+            LEFT JOIN (
+                SELECT md.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS DirectorNames
+                FROM p32001_21.MovieDirector md
+                JOIN p32001_21.Person p ON md.PersonID = p.PersonID
+                GROUP BY md.MovieID
+            ) AS directors ON m.MovieID = directors.MovieID
+            LEFT JOIN (
+                SELECT ma.MovieID, STRING_AGG(CONCAT(p.FirstName, ' ', p.LastName), ', ') AS CastMembers
+                FROM p32001_21.MovieActor ma
+                JOIN p32001_21.Person p ON ma.PersonID = p.PersonID
+                GROUP BY ma.MovieID
+            ) AS actors ON m.MovieID = actors.MovieID
+            LEFT JOIN (
+                SELECT r.MovieID, ROUND(AVG(r.Rating), 1) AS AvgRating
+                FROM p32001_21.MovieRating r
+                GROUP BY r.MovieID
+            ) AS user_ratings ON m.MovieID = user_ratings.MovieID
+            LEFT JOIN (
+                SELECT ms.MovieID, STRING_AGG(s.Name, ', ') AS StudioNames
+                FROM p32001_21.MovieStudio ms
+                JOIN p32001_21.Studio s ON ms.StudioID = s.StudioID
+                GROUP BY ms.MovieID
+            ) AS studios ON m.MovieID = studios.MovieID
+            """
+
+            # Add ORDER BY clause based on criteria
+            if sort_by == "name":
+                query += f"ORDER BY m.Name {order_dir}"
+            elif sort_by == "studio":
+                query += f"ORDER BY StudioNames {order_dir}"
+            elif sort_by == "genre":
+                query += f"""
+                ORDER BY (
+                    SELECT STRING_AGG(g.Name, ', ')
+                    FROM p32001_21.MovieGenre mg
+                    JOIN p32001_21.Genre g ON mg.GenreID = g.GenreID
+                    WHERE mg.MovieID = m.MovieID
+                ) {order_dir}
+                """
+            elif sort_by == "year":
+                query += f"ORDER BY EXTRACT(YEAR FROM m.ReleaseDate) {order_dir}"
+
+            cursor.execute(query)
+            results = cursor.fetchall()
+
+            # Print results in the same format as search_movies
+            for row in results:
+                print(f"MovieID: {row[0]}, Title: {row[1]}, Length: {row[2]} min, MPAA: {row[3]}, Release: {row[4]}, Director: {row[5]}, Cast: {row[6]}, Avg Rating: {row[7]}, Studio: {row[8]}")
+
+            return results
+        except psycopg2.Error as e:
+            print(f"Error sorting movies: {e}")
+            return []
+        finally:
+            cursor.close()
+            connection.close()

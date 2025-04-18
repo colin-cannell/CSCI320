@@ -98,10 +98,10 @@ class UserService:
                     print("Login successful.")
                     return True
                 else:
-                    print("print Login failed. Incorrect password.")
+                    print("Login failed. Incorrect password.")
                     return False
             else:
-                print("print Login failed. User not found.")
+                print("Login failed. User not found.")
                 return False
         except psycopg2.Error as e:
             print(f"Error logging in: {e}")
@@ -134,13 +134,12 @@ class UserService:
             cursor.close()
             connection.close()
 
-    def unfollow(self, username, following_username):
+    def unfollow(self, userid, following_username):
         connection = self.connect_db()
         if not connection:
             return False
 
         try:
-            userid = self.get_user_id(username)
             following_id = self.get_user_id(following_username)
 
             cursor = connection.cursor()
@@ -331,3 +330,62 @@ class UserService:
                 conn.close()
             except:
                 pass
+    
+    def list_users(self):
+        """List all users in the database with their basic information."""
+        connection = self.connect_db()
+        if not connection:
+            return []
+
+        try:
+            cursor = connection.cursor()
+            query = sql.SQL("""
+                SELECT 
+                    UserID, 
+                    Username, 
+                    FirstName, 
+                    LastName, 
+                    Email, 
+                    CreationDate, 
+                    LastLogInDate 
+                FROM "User"
+                ORDER BY UserID
+            """)
+            
+            cursor.execute(query)
+            users = cursor.fetchall()
+            
+            if not users:
+                print("No users found in the database.")
+                return []
+            
+            print("\nList of all registered users:")
+            print("{:<8} {:<15} {:<15} {:<15} {:<25} {:<15} {:<15}".format(
+                "ID", "Username", "First Name", "Last Name", "Email", 
+                "Created On", "Last Login"
+            ))
+            print("-" * 100)
+            
+            for user in users:
+                # Format dates if they exist
+                created = user[5].strftime("%Y-%m-%d") if user[5] else "N/A"
+                last_login = user[6].strftime("%Y-%m-%d %H:%M") if user[6] else "Never"
+                
+                print("{:<8} {:<15} {:<15} {:<15} {:<25} {:<15} {:<15}".format(
+                    user[0],  # UserID
+                    user[1],  # Username
+                    user[2],  # FirstName
+                    user[3],  # LastName
+                    user[4],  # Email
+                    created,
+                    last_login
+                ))
+            
+            return users
+            
+        except psycopg2.Error as e:
+            print(f"Error listing users: {e}")
+            return []
+        finally:
+            cursor.close()
+            connection.close()

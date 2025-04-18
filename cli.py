@@ -8,10 +8,6 @@ import os
 
 # Import modules for handling business logic
 
-
-username = "cjc1985"
-password = "Calamity2023!"
-
 db_params = {
     "host": "127.0.0.1",
     "database": "p32001_21",
@@ -66,7 +62,6 @@ def create_parser():
 
     unfollow_parser = subparsers.add_parser("unfollow", help="Unfollow a user")
     unfollow_parser.add_argument("user")
-    unfollow_parser.add_argument("unfollow")
 
     # Movie search and sorting
     search_parser = subparsers.add_parser("search_movies", help="Search for movies")
@@ -122,6 +117,13 @@ def create_parser():
     # Movie listing command
     subparsers.add_parser("list_movies", help="List all movies")
 
+    # Popular movies command
+    popular_movies_parser = subparsers.add_parser("popular_movies", help="Show top 20 popular movies in the last 90 days")
+    popular_movies_parser.add_argument("--followed", action="store_true", help="Show popular movies among users you follow")
+    
+    # New releases command
+    subparsers.add_parser("new_releases", help="Show top 5 new releases of the current month")
+
     # User profile command
     subparsers.add_parser("user_profile", help="Show the user's profile summary")
 
@@ -159,7 +161,7 @@ def main():
             elif args.command == "follow":
                 userService.follow(user_id, args.follow)
             elif args.command == "unfollow":
-                userService.unfollow(user_id, args.unfollow)
+                userService.unfollow(user_id, args.user)
             elif args.command == "search_movies":
                 if args.title:
                     movieService.search_by_title(args.title)
@@ -180,7 +182,7 @@ def main():
             elif args.command == "rate_movie":
                 movieService.rate_movie(user_id, args.movie_id, args.rating)
             elif args.command == "create_collection":
-                collectionService.create_collection(args.collectionid, user_id.userid, args.collection_name)
+                collectionService.create_collection(args.collectionid, user_id, args.collection_name)
             elif args.command == "add_to_collection":
                 collectionService.add_to_collection(user_id, args.collectionid, args.movie_name)
             elif args.command == "remove_from_collection":
